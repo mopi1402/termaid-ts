@@ -747,3 +747,17 @@ class FlowchartParser {
 export function parseFlowchart(text: string): Graph {
   return new FlowchartParser(text).parse();
 }
+
+/**
+ * Whether this text DECLARES the flowchart header, read the way parse() reads it: the first word of the first
+ * effective line, comments and blanks skipped. Exported for the dispatch's `declaredType`, since the header words are
+ * this parser's own; the parser itself never asks, drawing headerless text being the reference's behaviour.
+ */
+export function declaresFlowchart(text: string): boolean {
+  for (const raw of text.split("\n")) {
+    const line = stripComments(raw).trim();
+    if (line === "") continue;
+    return HEADER_KEYWORDS.includes((words(line)[0] ?? "").toLowerCase());
+  }
+  return false;
+}

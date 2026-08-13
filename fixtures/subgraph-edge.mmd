@@ -1,0 +1,9 @@
+flowchart TD
+    subgraph amont
+        A[capteur] --> B[filtre]
+    end
+    subgraph aval
+        C[agrege] --> D[stocke]
+    end
+    amont --> aval
+    aval --> E[tableau]

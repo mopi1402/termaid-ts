@@ -1,0 +1,11 @@
+flowchart LR
+    subgraph sources
+        A[capteur un]
+        B[capteur deux]
+    end
+    A --> C[collecteur]
+    B --> C
+    C --> aval
+    subgraph aval
+        D[stocke] --> E[publie]
+    end

@@ -5,7 +5,7 @@
 
 import { Graph } from "./graph/model.js";
 import { parseArchitecture } from "./parser/architecture.js";
-import { parseFlowchart } from "./parser/flowchart.js";
+import { declaresFlowchart, parseFlowchart } from "./parser/flowchart.js";
 import { parseGantt } from "./parser/gantt.js";
 import { parseBlockDiagram } from "./parser/blockdiagram.js";
 import { parseClassDiagram } from "./parser/classdiagram.js";
@@ -312,6 +312,23 @@ const declared = (text: string): (typeof SPECIALISED)[number] | undefined =>
       text.startsWith(type.prefix) ||
       (type.prefix === GIT_GRAPH && text.startsWith(INIT_DIRECTIVE) && text.includes(GIT_GRAPH))
   );
+
+/** What `declaredType` answers for the family the fallback parser draws, whichever of its header words was used. */
+const FLOWCHART = "flowchart";
+
+/**
+ * The type a source DECLARES, read exactly the way the dispatch reads it, or null where it declares none this renderer
+ * knows. null is not a refusal here: such a source still falls to the flowchart parser, which draws its lines as node
+ * labels, the reference's own behaviour. It is the caller's one chance to tell a type from a NEWER mermaid apart from
+ * a diagram, and to show the source rather than boxes of its syntax.
+ */
+export function declaredType(source: string): string | null {
+  const text = source.trim().replace(FRONTMATTER_RE, "");
+  const type = declared(text);
+  if (type !== undefined) return type.prefix;
+  if (text.startsWith(STATE_DIAGRAM)) return STATE_DIAGRAM;
+  return declaresFlowchart(text) ? FLOWCHART : null;
+}
 
 /** A mermaid source as a graph, the type read off its first word. */
 export function parse(source: string): Graph {

@@ -53,6 +53,11 @@ diagram kind without the dispatcher.
 width is the console's job rather than the library's. `renderThemed` is the shortcut that paints and stringifies in one
 call, without folding.
 
+`declaredType(source)` names the diagram kind a source declares, or returns `null` where it declares none this
+renderer knows. A `null` source is not refused: like the reference, the dispatcher falls back to the flowchart parser
+and draws its lines as node labels. The export is a caller's chance to tell a type from a newer mermaid apart from a
+diagram, and to show the source instead.
+
 ## Use it as a command
 
 ```sh
