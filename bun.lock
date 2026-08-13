@@ -4,25 +4,12 @@
     "": {
       "name": "@tayomi/termaid-ts",
       "devDependencies": {
-        "@tayomi/termaid-bin": "0.8.0",
         "@types/bun": "^1.3.0",
         "typescript": "^5.7.0",
       },
     },
   },
   "packages": {
-    "@tayomi/termaid-bin": ["@tayomi/termaid-bin@0.8.0", "", { "optionalDependencies": { "@tayomi/termaid-bin-darwin-arm64": "0.8.0", "@tayomi/termaid-bin-darwin-x64": "0.8.0", "@tayomi/termaid-bin-linux-arm64": "0.8.0", "@tayomi/termaid-bin-linux-x64": "0.8.0", "@tayomi/termaid-bin-win32-x64": "0.8.0" } }, "sha512-6U+WpucfytJ9mVl1jmYWhEXxt1AYeplc9bEJaklmZ5dmdaiUVYTkRY6MKFeuKaSkcDsIqN+9uGRetgNg1fMh/w=="],
-
-    "@tayomi/termaid-bin-darwin-arm64": ["@tayomi/termaid-bin-darwin-arm64@0.8.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-dTJFwJV0sDI5e2nYWiG9JI0aVqG+Rs8Cp7Mjm0mKX/oed/FnLMaT0ZsyJeAyJjWfiWiTcqWze6UpwncF6HsvlA=="],
-
-    "@tayomi/termaid-bin-darwin-x64": ["@tayomi/termaid-bin-darwin-x64@0.8.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-3pzWXaoHQa1OcfB649OpFgQcLtrLzzxdjIik6QgHHgp+BTmb/82E6fkXSu7FZF8ate2zvx7XeSaT6ndDkuM3Mw=="],
-
-    "@tayomi/termaid-bin-linux-arm64": ["@tayomi/termaid-bin-linux-arm64@0.8.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-/ZhcaNURu0kS94sO9p4vQBF5dwvtlkClZ0jQOk2DfnTa9DeYssco+kY0uvjtnm0jBxnzRQuNNduc4nok9ZhPAw=="],
-
-    "@tayomi/termaid-bin-linux-x64": ["@tayomi/termaid-bin-linux-x64@0.8.0", "", { "os": "linux", "cpu": "x64" }, "sha512-hmgHPNSBNqyElbxYpGg4uHcRyCrZfQHhyGNwqq35DwejbJUySorZ7gOCnf+Wx1njKOcBTg/ULchixx8j5kGhPA=="],
-
-    "@tayomi/termaid-bin-win32-x64": ["@tayomi/termaid-bin-win32-x64@0.8.0", "", { "os": "win32", "cpu": "x64" }, "sha512-QemT7Nh9NcueQW+KADHB9dN71XP6ut13bECfMT0obhAupz1E0vX8fF9qyQ+j4UL0OcPRex/H8GOWOO+ckSZuTg=="],
-
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
     "@types/node": ["@types/node@26.2.0", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg=="],

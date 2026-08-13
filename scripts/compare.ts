@@ -1,4 +1,4 @@
-// Every fixture drawn by the port and held against the take the reference binary left on disk, byte for byte.
+// Every fixture drawn by the port and held against the take the reference left on disk, byte for byte.
 //
 // Two takes per source and width, and they do NOT go through the same chain: the PLAIN one is what `render` returns
 // and a shell prints, the NEON one is what a theme paints and a CONSOLE then folds to its width, which is what the

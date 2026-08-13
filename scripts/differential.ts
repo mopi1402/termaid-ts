@@ -1,5 +1,5 @@
-// The port held against the LIVE reference binary, which is the question the frozen takes cannot answer: those say
-// what the binary drew the day the oracle ran, and a version bump invalidates every one of them at once.
+// The port held against the LIVE reference, which is the question the frozen takes cannot answer: those say what the
+// reference drew the day the oracle ran, and a version bump invalidates every one of them at once.
 //
 // A case costs one spawn, never two: the reference is a subprocess, the port runs in this process. Only the CLI cases
 // at the end spawn both, since a flag and an error message are the one thing the library cannot answer for.
@@ -11,21 +11,21 @@
 //     bun scripts/differential.ts            the whole corpus
 //     bun scripts/differential.ts --quick    the fixtures alone, no mutants
 //
-// The exit code is NOT compared, once and for a written reason: the shipped binary is built from an entry that calls
-// main() without sys.exit(), so it returns 0 where cli.py returns 1. Its stdout and stderr are compared in full.
+// The exit code is NOT compared, once and for a written reason: the reference is reached THROUGH a runner, so what
+// comes back is that runner's code and not the tool's. Its stdout and stderr are compared in full, which is what a
+// terminal shows anyway.
 
 import { execFile } from "node:child_process";
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { printToConsole, render, renderThemedText, type Options } from "../src/index.js";
+import { REFERENCE_COMMAND, referenceArgs } from "./reference.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const FIXTURES = path.join(ROOT, "fixtures");
 const SOURCE_EXT = ".mmd";
-const REFERENCE = "@tayomi/termaid-bin";
 const NEWLINE = "\n";
 const EMPTY = "";
 
@@ -206,15 +206,6 @@ const ADVERSARIAL: readonly Case[] = [
 
 // ---------------------------------------------------------------------------------------------- the run
 
-function reference(): string {
-  const { termaidPath } = createRequire(import.meta.url)(REFERENCE) as { termaidPath(): string | null };
-  const bin = termaidPath();
-  if (bin === null) throw new Error(`${REFERENCE}: no binary for this platform`);
-  return bin;
-}
-
-const bin = reference();
-
 interface Divergence {
   label: string;
   source: string;
@@ -248,8 +239,8 @@ let checked = 0;
 function referenceOutput(source: string, profile: Profile): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = execFile(
-      bin,
-      argvOf(profile),
+      REFERENCE_COMMAND,
+      referenceArgs(argvOf(profile)),
       { encoding: "utf8", env: { ...process.env, ...COLOUR_ENV }, maxBuffer: Number.MAX_SAFE_INTEGER },
       (_error, stdout, stderr) => resolve({ stdout, stderr })
     );
@@ -388,7 +379,7 @@ function spawned(
 
 async function checkCli(): Promise<void> {
   for (const entry of CLI_CASES) {
-    const expected = await spawned(bin, entry.argv, entry.input, entry.env ?? {});
+    const expected = await spawned(REFERENCE_COMMAND, referenceArgs(entry.argv), entry.input, entry.env ?? {});
     const got = await spawned(BUN, [PORT_ENTRY, ...entry.argv], entry.input, entry.env ?? {});
     checked++;
     if (expected.stdout !== got.stdout || expected.stderr !== got.stderr) {

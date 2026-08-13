@@ -1,5 +1,5 @@
-// The only verdict this port answers to: the reference binary's own bytes (fixtures/expected/, written by
-// scripts/oracle.mjs). A fixture is judged only once it is CLAIMED in fixtures/claimed.json, so the suite stays green
+// The only verdict this port answers to: the reference's own bytes (fixtures/expected/, written by
+// scripts/oracle.ts). A fixture is judged only once it is CLAIMED in fixtures/claimed.json, so the suite stays green
 // while the port advances and the claim list is the progress: a claimed fixture that drifts fails here.
 
 import { describe, it, expect } from "bun:test";
@@ -24,7 +24,7 @@ const source = (name: string): string => fs.readFileSync(path.join(FIXTURES, `${
 const take = (name: string, width: number, theme: string | null): string =>
   fs.readFileSync(path.join(EXPECTED, `${name}@${width}${theme === null ? "" : `.${theme}`}${DRAWN_EXT}`), "utf8");
 
-describe("what the reference binary draws", () => {
+describe("what the reference draws", () => {
   it("is frozen on disk for every fixture, or the port has nothing to answer to", () => {
     const sources = fs
       .readdirSync(FIXTURES)
