@@ -110,7 +110,9 @@ holds the slice of Rich it depends on, down to Rich emitting one SGR sequence pe
 
 **Parity is the specification, not an aspiration.** The reference's own bytes are the only verdict: what
 `termaid 0.8.0` draws is frozen under `fixtures/expected/`, and a fixture counts only once the port renders the same
-bytes. The version number tracks the reference it answers to.
+bytes. The version number tracks the reference it answers to: the major.minor names the termaid release the port
+reproduces, the patch counts this package's own additions on top of it, and [CHANGELOG.md](CHANGELOG.md) records those
+additions release by release. The upstream's own history stays upstream; that file is this repo's alone.
 
 **It is verified against the live reference, not only against frozen output.** Frozen takes say what it drew on
 one day, for sources someone chose. The differential harness runs both implementations side by side on a hostile
