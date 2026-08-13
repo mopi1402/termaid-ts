@@ -1,0 +1,10 @@
+architecture-beta
+    service left(server)[Left]
+    service right(server)[Right]
+    service top(database)[Top]
+    service bottom(disk)[Bottom]
+    junction hub
+    left:R --> L:hub
+    hub:R --> L:right
+    top:B --> T:hub
+    hub:B --> T:bottom

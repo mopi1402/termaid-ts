@@ -1,0 +1,9 @@
+classDiagram
+    class Shape {
+        <<interface>>
+        +draw()* void
+        +count$ int
+    }
+    class Square
+    <<abstract>> Square
+    Shape <|.. Square : implements

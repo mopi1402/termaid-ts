@@ -1,0 +1,24 @@
+                       Effort vs Impact
+
+       ● Rename a flag          │
+                                │ Port the parser●
+                                │
+                                │
+                                │ ● Theme support
+               Plan             │          Do First
+                                │
+                                │
+                                │
+                                │
+  ──────────────────────────────┼─────────────────────────────
+                                │
+                                │
+             ● Rewrite the docs │
+                                │
+             Delegate           │          Eliminate
+                                │
+                                │
+                                │
+                                │
+
+                   Low Effort -> High Effort

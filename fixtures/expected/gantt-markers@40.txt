@@ -1,0 +1,9 @@
+                                     Release with markers
+                               Jun 15
+ Phase one     │                  ┊
+   Spec        │██████████████████┊
+   Build       │                  ███████████████████████████
+ Phase two     │                  ┊
+   Verify      │                  ┊                               █████████████
+               └┬─────────┬─────────┬──────────┬─────────┬─────────┬──────────┬
+             Jun 01    Jun 09    Jun 17     Jun 25    Jul 03    Jul 11     Jul 20

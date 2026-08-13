@@ -1,0 +1,5 @@
+stateDiagram-v2
+    state "Waiting for input" as wait
+    state "Writing the file" as write
+    wait --> write : keypress
+    write --> wait : flushed

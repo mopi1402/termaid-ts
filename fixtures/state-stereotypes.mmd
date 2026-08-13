@@ -1,0 +1,8 @@
+stateDiagram-v2
+    state Choose <<choice>>
+    state Split <<fork>>
+    state Merge <<join>>
+    Start --> Choose
+    Choose --> Split
+    Split --> Merge
+    Merge --> Done

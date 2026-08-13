@@ -1,0 +1,23 @@
+Release plan
+
+ ══ Design ══
+ │
+ ●── Wireframes
+ │   Sketches
+ │   Reviews
+ │
+ ●── Mockups
+ │   Figma
+ │
+ ══ Build ══
+ │
+ ●── Frontend
+ │   React
+ │
+ ●── Backend
+ │   API
+ │   Database
+ │
+ ══ Ship ══
+ │
+ ●── Launch

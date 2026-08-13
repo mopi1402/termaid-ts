@@ -1,0 +1,7 @@
+
+                 [v0.1]                   [v1.0]
+  main    ───●──────●────────┼───────────────●────────✖─
+           init   setup      │            release  hotfix
+                             │               │
+  develop                    ●───────■───────┼
+                          feature   fix

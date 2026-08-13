@@ -1,0 +1,7 @@
+
+                       [picked]
+  main  ───●─────┼─────────●──────────●─
+         base    │    work-cherry   after
+                 │         │
+  topic          ●─────────┼
+               work

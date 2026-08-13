@@ -1,0 +1,6 @@
+       ╭─ Origins ──╭─ Long history
+       │            ╰─ Popularisation
+Root ──├─ Research ──╭─ On effectiveness
+       │             ╰─ On automatic creation
+       ╰─ Tools ──╭─ Pen and paper
+                  ╰─ Mermaid

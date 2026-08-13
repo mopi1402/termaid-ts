@@ -1,0 +1,11 @@
+sequenceDiagram
+    actor Al as Alice
+    participant Srv as Server
+    database DB
+    queue Q
+    boundary B
+    control C
+    entity E
+    collections Col
+    Al->>Srv: request
+    Srv->>DB: query

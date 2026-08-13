@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant A
+    participant B
+    loop every minute
+        A->>B: ping
+        alt is up
+            B-->>A: pong
+        else is down
+            B--xA: timeout
+        end
+    end
