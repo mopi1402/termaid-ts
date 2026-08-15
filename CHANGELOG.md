@@ -5,6 +5,12 @@ This file records what THIS package changes, release by release. The upstream
 release the port reproduces, and the patch counts this package's own additions on top of it. An entry marked ◉ is
 such an addition, with no counterpart in termaid; every other entry ports something the upstream did.
 
+## Unreleased
+
+- ◉ `background: "light"` paints a drawing for a light terminal, every colour mirrored about its luminance, hue kept
+- ◉ The mirror sits at the ONE seam a colour crosses, so a theme's palette, a chart's sections and a node's own `fill` all turn together
+- ◉ Asking for `dark`, or asking for nothing, moves not a byte: the parity the bench measures is the default path
+
 ## 0.8.1 (2026-08-13)
 
 - ◉ `declaredType(source)` answers the type a source declares, `null` where the fallback would draw boxes of its syntax

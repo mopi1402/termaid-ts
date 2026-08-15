@@ -25,6 +25,7 @@ import { parseTimeline } from "./parser/timeline.js";
 import { DEFAULT_RENDER, renderGraph, type RenderOptions } from "./renderer/draw.js";
 import { renderRich, renderSequenceRich } from "./output/rich.js";
 import { Text } from "./richcompat.js";
+import type { Background } from "./background.js";
 import { renderGantt } from "./renderer/gantt.js";
 import { renderBlockDiagram } from "./renderer/blockdiagram.js";
 import { renderClassDiagram } from "./renderer/classdiagram.js";
@@ -82,6 +83,7 @@ export { renderRich, renderSequenceRich } from "./output/rich.js";
 export { getTheme, THEMES, type Theme } from "./renderer/themes.js";
 export { printToConsole, Text, CONSOLE_WIDTH } from "./richcompat.js";
 export { displayWidth } from "./utils.js";
+export { DARK_BACKGROUND, LIGHT_BACKGROUND, type Background } from "./background.js";
 
 /** YAML frontmatter, which the reference drops before it reads a line of the diagram. */
 const FRONTMATTER_RE = /^---\s*\n[\s\S]*?\n---\s*\n/;
@@ -98,6 +100,12 @@ const COMPACT_STEPS: ReadonlyArray<{ gap?: number; paddingX?: number }> = [
 export interface Options extends Partial<RenderOptions> {
   /** A ceiling on the output's width: past it, the drawing is redrawn tighter until it fits or runs out of steps. */
   width?: number;
+  /**
+   * ◉ The side the terminal is: every theme was drawn for `dark`, which is the default and mirrors nothing. On
+   * `light` each colour is flipped about its luminance, hue kept, so a pale foreground stops being fog on white.
+   * Layout is untouched either way: the same drawing, painted for the other side.
+   */
+  background?: Background;
 }
 
 /** The FLOWCHART's own defaults. A renderer of its own keeps its own, unless the caller has moved off these. */
@@ -384,7 +392,7 @@ function fitted<T>(
 
 /** The drawing a terminal shows. A `width` compacts the layout until it fits, the way the reference's CLI does. */
 export function render(source: string, options: Options = {}): string {
-  const { width, ...renderOptions } = options;
+  const { width, background: _background, ...renderOptions } = options;
   return fitted((o) => drawn(source, o), (result) => result, renderOptions, width);
 }
 
@@ -395,11 +403,11 @@ const DEFAULT_THEME = "default";
  * console's width: folding is what a console does to a text, and `cli.ts` is where the reference does it.
  */
 export function renderThemedText(source: string, options: Options = {}, theme: string = DEFAULT_THEME): Text {
-  const { width, ...renderOptions } = options;
+  const { width, background: _background, ...renderOptions } = options;
   return fitted((o) => painted(source, o, theme), (result) => result.plain, renderOptions, width);
 }
 
 /** The same drawing, painted by a theme, as the bytes a terminal reads. */
 export function renderThemed(source: string, options: Options = {}, theme: string = DEFAULT_THEME): string {
-  return renderThemedText(source, options, theme).toAnsi();
+  return renderThemedText(source, options, theme).toAnsi(options.background);
 }

@@ -53,6 +53,11 @@ diagram kind without the dispatcher.
 width is the console's job rather than the library's. `renderThemed` is the shortcut that paints and stringifies in one
 call, without folding.
 
+`background: "light"` paints the drawing for a light terminal: every theme here was drawn for a dark one, and the pale
+foregrounds that read on black turn to fog on white. Each colour is mirrored about its luminance with its hue kept, at
+the single seam every colour crosses, so a theme's palette, a chart's section colours and a `fill` the source itself
+declared all turn together. The layout is untouched, and asking for `dark` or asking for nothing changes not one byte.
+
 `declaredType(source)` names the diagram kind a source declares, or returns `null` where it declares none this
 renderer knows. A `null` source is not refused: like the reference, the dispatcher falls back to the flowchart parser
 and draws its lines as node labels. The export is a caller's chance to tell a type from a newer mermaid apart from a

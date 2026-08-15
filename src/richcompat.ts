@@ -4,6 +4,7 @@
 // bytes. Only what a theme or `_css_to_rich_style` can actually spell is implemented, so an unknown word raises rather
 // than paints something Rich would not.
 
+import { LIGHT_BACKGROUND, mirrorRgb, mirrorStandard, type Background } from "./background.js";
 import { displayWidth } from "./utils.js";
 
 /** Rich's escape introducer, and the sequence closing a styled run. */
@@ -151,11 +152,22 @@ function colorCodes(color: Color, foreground: boolean): string[] {
   return [String(base + (color.index - (bright ? BRIGHT_FIRST : 0)))];
 }
 
+/** ◉ The same colour on the terminal's other side. Dark mirrors nothing: it is the side every theme was drawn for. */
+const mirrored = (color: Color, background: Background | undefined): Color => {
+  if (background !== LIGHT_BACKGROUND) return color;
+  return color.kind === "truecolor"
+    ? { kind: "truecolor", rgb: mirrorRgb(color.rgb) }
+    : { kind: "standard", index: mirrorStandard(color.index) };
+};
+
 /**
  * Rich's `Style.parse` on a definition string, down to the codes a terminal is sent. An empty definition, and one
  * naming nothing a terminal can do, both come back empty: the run is then written with no escape at all.
+ *
+ * ◉ `background` names the side the drawing is painted onto, and is the ONE seam any colour crosses: a theme's, a
+ * chart section's, and one a source declared for a node of its own. Absent, not a byte moves.
  */
-export function styleCodes(definition: string): string {
+export function styleCodes(definition: string, background?: Background): string {
   const words = definition.trim().split(WORD_SEPARATOR_RE).filter(Boolean);
   const set = new Set<number>();
   let color: Color | null = null;
@@ -184,8 +196,8 @@ export function styleCodes(definition: string): string {
   for (let bit = 0; bit < ATTRIBUTE_CODES.length; bit++) {
     if (set.has(bit)) codes.push(ATTRIBUTE_CODES[bit] as string);
   }
-  if (color !== null) codes.push(...colorCodes(color, true));
-  if (bgcolor !== null) codes.push(...colorCodes(bgcolor, false));
+  if (color !== null) codes.push(...colorCodes(mirrored(color, background), true));
+  if (bgcolor !== null) codes.push(...colorCodes(mirrored(bgcolor, background), false));
   return codes.join(CODE_SEPARATOR);
 }
 
@@ -332,8 +344,8 @@ export class Text {
   }
 
   /** What a terminal is sent, with no console around it: every styled cell opened and closed on its own. */
-  toAnsi(): string {
-    return renderCells(this.cells);
+  toAnsi(background?: Background): string {
+    return renderCells(this.cells, background);
   }
 
   /** Rich's `Text.wrap` at the given width, each source line broken into the pieces that fit. */
@@ -372,7 +384,7 @@ function splitCells(cells: readonly Cell[]): Cell[][] {
 }
 
 /** A run of cells as the bytes Rich writes: one escape per styled cell, the unstyled stretches written bare. */
-function renderCells(cells: readonly Cell[]): string {
+function renderCells(cells: readonly Cell[], background?: Background): string {
   let out = "";
   let bare = "";
   for (const cell of cells) {
@@ -382,7 +394,7 @@ function renderCells(cells: readonly Cell[]): string {
     }
     out += bare;
     bare = "";
-    const codes = styleCodes(cell.style);
+    const codes = styleCodes(cell.style, background);
     out += codes === "" ? cell.ch : `${CSI}${codes}${SGR_END}${cell.ch}${RESET}`;
   }
   return out + bare;
@@ -394,6 +406,6 @@ function renderCells(cells: readonly Cell[]): string {
  */
 export const CONSOLE_WIDTH = 80;
 
-export function printToConsole(text: Text, width: number = CONSOLE_WIDTH): string {
-  return text.wrap(width).map(renderCells).join(LINE_BREAK) + LINE_BREAK;
+export function printToConsole(text: Text, width: number = CONSOLE_WIDTH, background?: Background): string {
+  return text.wrap(width).map((cells) => renderCells(cells, background)).join(LINE_BREAK) + LINE_BREAK;
 }
