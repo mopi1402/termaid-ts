@@ -1,0 +1,5 @@
+               ╭─ Square branch ──── Leaf one
+               ├─ Hexagon branch
+Central idea ──├─ Rounded branch
+               ├─ Cloud branch
+               ╰─ Bang branch

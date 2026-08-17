@@ -12,6 +12,8 @@ something the upstream did.
 - ◉ The y-axis label is drawn, in `xychart-beta` and `quadrantChart`, both parsing it into the model and neither
   renderer ever reading it back
 - ◉ An edge label is never written over what is already drawn, nor cut without a mark: it takes a clear row instead
+- ◉ A mindmap id is read as the handle it is and the shape behind it unwrapped, where the reference draws both as text,
+  its four patterns anchoring at the start of a line and two of mermaid's six shapes having no pattern at all
 - `fixtures/divergences/` freezes what this port draws alone, kept out of the parity corpus and its mutants
 - `str.strip()` spelled out rather than approximated by `trim()`, which disagrees with it on six code points
 - Rich's `strip_control_codes` and `expand_tabs` ported, the two steps a painted text takes and a plain one does not
