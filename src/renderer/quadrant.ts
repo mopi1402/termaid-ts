@@ -12,6 +12,9 @@ const CHART_H = 20;
 /** Left margin, which is where the y-axis label would go. */
 const MARGIN_L = 2;
 const BLANK = " ";
+/** What tells the label apart from a subtitle: it names the axis running UP the chart. */
+const Y_MARK = "↑";
+const Y_MARK_ASCII = "^";
 
 const STYLE_LABEL = "label";
 const STYLE_EDGE = "edge";
@@ -79,15 +82,22 @@ export function renderQuadrant(diagram: QuadrantChart, useAscii = false): Canvas
     xLabelLine = BLANK.repeat(Math.max(0, pad)) + diagram.xLabel;
   }
 
-  const height = titleLines.length + CHART_H + (xLabelLine !== "" ? 2 : 0);
+  // ◉ The y-axis label, which the reference parses into the model and then never reads: `renderer/quadrant.py:15`
+  // even reserves this chart's left margin for it and writes nothing there. Given a line of its own above the grid,
+  // marked with the axis it names, so a chart that declares no y-axis is not moved by a single byte.
+  const yLabelLine = diagram.yLabel === "" ? "" : `${useAscii ? Y_MARK_ASCII : Y_MARK} ${diagram.yLabel}`;
+  const yRows = yLabelLine === "" ? 0 : 1;
+
+  const height = titleLines.length + yRows + CHART_H + (xLabelLine !== "" ? 2 : 0);
   const canvas = new Canvas(MARGIN_L + CHART_W + 1, height);
 
   titleLines.forEach((line, r) => canvas.putText(r, 0, line, STYLE_LABEL));
+  if (yLabelLine !== "") canvas.putText(titleLines.length, 0, yLabelLine, STYLE_EDGE_LABEL);
 
   // Every cell is written, blanks included: `put` refuses a space, so a blank carries its colour through the style.
   for (let r = 0; r < CHART_H; r++) {
     for (let c = 0; c < CHART_W; c++) {
-      const row = titleLines.length + r;
+      const row = titleLines.length + yRows + r;
       const col = MARGIN_L + c;
       const ch = (grid[r] as string[])[c] as string;
       const style = (styles[r] as string[])[c] as string;
@@ -96,7 +106,7 @@ export function renderQuadrant(diagram: QuadrantChart, useAscii = false): Canvas
     }
   }
 
-  if (xLabelLine !== "") canvas.putText(titleLines.length + CHART_H + 1, 0, xLabelLine, STYLE_EDGE_LABEL);
+  if (xLabelLine !== "") canvas.putText(titleLines.length + yRows + CHART_H + 1, 0, xLabelLine, STYLE_EDGE_LABEL);
 
   return canvas;
 }

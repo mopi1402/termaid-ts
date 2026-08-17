@@ -88,12 +88,17 @@ Three checks, and none of them trusts the other two.
 | --- | --- |
 | `bun run compare` | the port against takes of the reference frozen under `fixtures/expected/` |
 | `bun run differential` | the port against the LIVE reference, on a deliberately hostile corpus of mutated sources |
-| `bun run verify` | the typecheck and the suite |
+| `bun run verify` | the typecheck, the suite, and the takes this port answers for alone |
 
 The frozen takes say what the reference drew the day the oracle ran, so a version bump invalidates all of them at once:
 `bun run oracle` writes them again. The differential harness is the one that catches what frozen takes cannot, since it
 feeds both sides truncated lines, unclosed delimiters, empty labels and arrows inside labels, and a port has to be wrong
 in exactly the same way as the reference.
+
+A handful of drawings this port answers for ALONE, where the reference loses something its author wrote, sit under
+`fixtures/divergences/` with takes written by `bun run ourtakes`. They are kept out of `fixtures/` on purpose: the
+parity corpus feeds the mutants, so a divergence held there would spread across a whole family of them. Each one is
+argued in [CHANGELOG.md](CHANGELOG.md) under a ◉ and named in the differential's own allowance list.
 
 The reference is the Python termaid itself, pinned and fetched from PyPI by [uv](https://docs.astral.sh/uv/):
 `scripts/reference.ts` names the version, and the two harnesses that spawn it need `uvx` on the machine. Nothing here

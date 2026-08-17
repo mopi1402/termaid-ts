@@ -1,7 +1,7 @@
 // Ported from src/termaid/parser/xychart.py.
 
 import { makeXYChart, makeXYDataset, type XYChart } from "../model/xychart.js";
-import { pyFloat, splitLines } from "../pycompat.js";
+import { pyFloat, pyStrip, splitLines } from "../pycompat.js";
 
 const COMMENT = "%%";
 const HORIZONTAL = "horizontal";
@@ -22,31 +22,31 @@ const RANGE_RE = new RegExp(String.raw`^(${NUM})\s*-->\s*(${NUM})`);
 
 /** A mermaid XY chart definition. */
 export function parseXYChart(text: string): XYChart {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const chart = makeXYChart();
   if (lines.length === 0) return chart;
 
-  if ((lines[0] as string).trim().toLowerCase().includes(HORIZONTAL)) chart.horizontal = true;
+  if (pyStrip((lines[0] as string)).toLowerCase().includes(HORIZONTAL)) chart.horizontal = true;
 
   for (let line of lines.slice(1)) {
     const comment = line.indexOf(COMMENT);
     if (comment >= 0) line = line.slice(0, comment);
 
-    const stripped = line.trim();
+    const stripped = pyStrip(line);
     if (stripped === "") continue;
     const lower = stripped.toLowerCase();
 
     if (lower.startsWith(TITLE)) {
-      chart.title = stripQuotes(stripped.slice(TITLE.length).trim());
+      chart.title = stripQuotes(pyStrip(stripped.slice(TITLE.length)));
     } else if (lower.startsWith(X_AXIS)) {
-      parseAxis(stripped.slice(X_AXIS.length).trim(), chart, true);
+      parseAxis(pyStrip(stripped.slice(X_AXIS.length)), chart, true);
     } else if (lower.startsWith(Y_AXIS)) {
-      parseAxis(stripped.slice(Y_AXIS.length).trim(), chart, false);
+      parseAxis(pyStrip(stripped.slice(Y_AXIS.length)), chart, false);
     } else if (lower.startsWith(BAR)) {
-      const values = parseNumberList(stripped.slice(BAR.length).trim());
+      const values = parseNumberList(pyStrip(stripped.slice(BAR.length)));
       if (values.length > 0) chart.datasets.push(makeXYDataset(values, "bar"));
     } else if (lower.startsWith(LINE)) {
-      const values = parseNumberList(stripped.slice(LINE.length).trim());
+      const values = parseNumberList(pyStrip(stripped.slice(LINE.length)));
       if (values.length > 0) chart.datasets.push(makeXYDataset(values, "line"));
     }
   }
@@ -60,7 +60,7 @@ function parseAxis(rest: string, chart: XYChart, isX: boolean): void {
   if (titledList !== null) {
     if (isX) {
       chart.xLabel = titledList[1] as string;
-      chart.xCategories = (titledList[2] as string).split(SEPARATOR).map((c) => stripQuotes(c.trim()));
+      chart.xCategories = (titledList[2] as string).split(SEPARATOR).map((c) => stripQuotes(pyStrip(c)));
     } else {
       chart.yLabel = titledList[1] as string;
     }
@@ -108,8 +108,8 @@ function parseBracketList(text: string): string[] | null {
   if (list === null) return null;
   return (list[1] as string)
     .split(SEPARATOR)
-    .filter((item) => item.trim() !== "")
-    .map((item) => stripQuotes(item.trim()));
+    .filter((item) => pyStrip(item) !== "")
+    .map((item) => stripQuotes(pyStrip(item)));
 }
 
 /** `[1, 2, 3]` as numbers, anything unreadable simply left out. */
@@ -118,7 +118,7 @@ function parseNumberList(text: string): number[] {
   if (list === null) return [];
   const values: number[] = [];
   for (const item of (list[1] as string).split(SEPARATOR)) {
-    const value = pyFloat(item.trim().replace(/^\++/, ""));
+    const value = pyFloat(pyStrip(item).replace(/^\++/, ""));
     if (value !== null) values.push(value);
   }
   return values;

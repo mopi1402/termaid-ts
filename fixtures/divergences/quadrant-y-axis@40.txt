@@ -1,0 +1,25 @@
+                       Effort vs Impact
+
+↑ Low Impact -> High Impact
+                                │
+                                │ Port the parser●
+                                │
+                                │
+                                │
+               Plan             │          Do First
+                                │
+                                │
+                                │
+                                │
+  ──────────────────────────────┼─────────────────────────────
+                                │
+                                │
+                                │
+                                │
+             Delegate           │          Eliminate
+                                │
+                                │
+                                │
+                                │
+
+                   Low Effort -> High Effort

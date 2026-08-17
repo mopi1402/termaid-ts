@@ -10,7 +10,7 @@ import {
   type ERDiagram,
   type Relationship,
 } from "../model/erdiagram.js";
-import { PY_WORD, pyRepr, stripChars } from "../pycompat.js";
+import { PY_WORD, pyRepr, pyStrip, stripChars } from "../pycompat.js";
 
 const W = PY_WORD;
 const FRONTMATTER_RE = /^---\s*\n[\s\S]*?\n---\s*\n/;
@@ -70,7 +70,7 @@ const styleOf = (line: string): string => (line === DASHED_LINE ? DASHED : SOLID
 
 /** The marker a written-out cardinality stands for, or nothing at all where it names none. */
 function resolveCardAlias(text: string, side: string): string {
-  const wanted = text.trim().toLowerCase();
+  const wanted = pyStrip(text).toLowerCase();
   for (const [alias, leftSymbol, rightSymbol] of CARD_ALIASES) {
     if (wanted === alias) return side === LEFT ? leftSymbol : rightSymbol;
   }
@@ -78,7 +78,7 @@ function resolveCardAlias(text: string, side: string): string {
 }
 
 /** The name out of a quoted-or-bare pair of groups. */
-const entityName = (quoted: string | undefined, bare: string | undefined): string => (quoted ?? bare ?? "").trim();
+const entityName = (quoted: string | undefined, bare: string | undefined): string => pyStrip((quoted ?? bare ?? ""));
 
 function ensureEntity(diagram: ERDiagram, name: string): void {
   if (!diagram.entities.has(name)) diagram.entities.set(name, makeEntity(name));
@@ -91,7 +91,7 @@ export function parseERDiagram(text: string): ERDiagram {
   let i = 0;
 
   while (i < lines.length) {
-    const stripped = (lines[i] as string).trim();
+    const stripped = pyStrip((lines[i] as string));
     i += 1;
 
     if (
@@ -121,7 +121,7 @@ export function parseERDiagram(text: string): ERDiagram {
           card1: symbols[3] as string,
           card2: symbols[5] as string,
           lineStyle: styleOf(symbols[4] as string),
-          label: stripChars((symbols[8] as string).trim(), QUOTE),
+          label: stripChars(pyStrip((symbols[8] as string)), QUOTE),
         })
       );
       continue;
@@ -131,7 +131,7 @@ export function parseERDiagram(text: string): ERDiagram {
     if (words !== null) {
       const card1 = resolveCardAlias(words[3] as string, LEFT);
       const card2 = resolveCardAlias(words[5] as string, "right");
-      const line = LINE_ALIASES[(words[4] as string).trim().toLowerCase()] ?? "--";
+      const line = LINE_ALIASES[pyStrip((words[4] as string)).toLowerCase()] ?? "--";
 
       // A line naming no cardinality this side of the arrow is not a relationship, so it falls through to the entity
       // matchers below rather than being recorded as one.
@@ -143,7 +143,7 @@ export function parseERDiagram(text: string): ERDiagram {
             card1,
             card2,
             lineStyle: styleOf(line),
-            label: stripChars((words[8] as string).trim(), QUOTE),
+            label: stripChars(pyStrip((words[8] as string)), QUOTE),
           })
         );
         continue;
@@ -159,7 +159,7 @@ export function parseERDiagram(text: string): ERDiagram {
       if (alias !== "") entity.alias = alias;
 
       while (i < lines.length) {
-        const body = (lines[i] as string).trim();
+        const body = pyStrip((lines[i] as string));
         i += 1;
         if (body === CLOSING_BRACE) break;
         if (body === "") continue;
@@ -198,7 +198,7 @@ function attributeOf(match: RegExpExecArray): Attribute {
   return {
     type: match[1] as string,
     name: match[2] as string,
-    keys: written === "" ? [] : written.split(",").map((key) => key.trim()).filter((key) => key !== ""),
+    keys: written === "" ? [] : written.split(",").map((key) => pyStrip(key)).filter((key) => key !== ""),
     comment: match[4] ?? "",
   };
 }

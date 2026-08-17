@@ -6,6 +6,7 @@
 
 import { LIGHT_BACKGROUND, mirrorRgb, mirrorStandard, type Background } from "./background.js";
 import { displayWidth } from "./utils.js";
+import { pyStrip } from "./pycompat.js";
 
 /** Rich's escape introducer, and the sequence closing a styled run. */
 const CSI = "\x1b[";
@@ -168,7 +169,7 @@ const mirrored = (color: Color, background: Background | undefined): Color => {
  * chart section's, and one a source declared for a node of its own. Absent, not a byte moves.
  */
 export function styleCodes(definition: string, background?: Background): string {
-  const words = definition.trim().split(WORD_SEPARATOR_RE).filter(Boolean);
+  const words = pyStrip(definition).split(WORD_SEPARATOR_RE).filter(Boolean);
   const set = new Set<number>();
   let color: Color | null = null;
   let bgcolor: Color | null = null;
@@ -205,10 +206,30 @@ export function styleCodes(definition: string, background?: Background): string 
 interface Cell {
   readonly ch: string;
   readonly style: string;
+  /**
+   * Whether this cell CONTINUES the span its neighbour opened instead of opening one of its own. Only the blanks a tab
+   * expands into set it: everything else the port writes is one span per code point, which is what makes a ruled line
+   * come out one escape per character. Rich has spans rather than cells, so a tab's fill is one segment there.
+   */
+  readonly runs?: true;
 }
+
+/**
+ * What Rich takes OUT of a text before anything else touches it: `rich/control.py:15` names the five, and
+ * `rich/text.py:156` applies them in `Text.__init__`. The drawing was laid out with them still in it, so cutting them
+ * here shortens the line and shifts every style that follows. That misalignment is the REFERENCE's, and reproducing it
+ * is the whole point; keeping the codes would also hand a terminal a `\r` or a `\b` out of a diagram's own label.
+ */
+const STRIPPED_CONTROL: ReadonlySet<number> = new Set([0x07, 0x08, 0x0b, 0x0c, 0x0d]);
+const stripControlCodes = (text: string): string =>
+  [...text].filter((ch) => !STRIPPED_CONTROL.has(ch.codePointAt(0) as number)).join("");
 
 const NO_CELL_STYLE = "";
 const LINE_BREAK = "\n";
+const TAB = "\t";
+/** Rich's default, from `Console(tab_size=8)` (`rich/console.py:649`) through `Text.wrap` (`rich/text.py:702`). */
+const TAB_SIZE = 8;
+const BLANK = " ";
 const SPACE_RE = /\s/u;
 const isSpace = (ch: string): boolean => SPACE_RE.test(ch);
 
@@ -330,7 +351,7 @@ export class Text {
   private readonly cells: Cell[];
 
   constructor(plain: string) {
-    this.cells = [...plain].map((ch) => ({ ch, style: NO_CELL_STYLE }));
+    this.cells = [...stripControlCodes(plain)].map((ch) => ({ ch, style: NO_CELL_STYLE }));
   }
 
   get plain(): string {
@@ -351,7 +372,8 @@ export class Text {
   /** Rich's `Text.wrap` at the given width, each source line broken into the pieces that fit. */
   wrap(width: number, fold: boolean = true): Cell[][] {
     const out: Cell[][] = [];
-    for (const line of splitCells(this.cells)) {
+    for (const raw of splitCells(this.cells)) {
+      const line = expandTabs(raw);
       const offsets = divideLine(line, width, fold);
       const pieces: Cell[][] = [];
       let previous = 0;
@@ -367,6 +389,35 @@ export class Text {
     }
     return out;
   }
+}
+
+/**
+ * Rich's `Text.expand_tabs` (`rich/text.py:818`), which `wrap` runs on each line before it is divided
+ * (`rich/text.py:1231`). The tab itself becomes ONE blank, and the run is then filled to the next stop, so how many
+ * blanks it takes depends on the column the tab sits at and never on the tab alone.
+ *
+ * The fill carries the tab's own style as ONE span, which is `extend_style` on Rich's side and the `runs` flag here.
+ * Nothing in this is a repair: the layout counted the tab as a single column long before, so the box it sits in comes
+ * out too narrow either way. It comes out too narrow the SAME way, which is what parity asks.
+ */
+function expandTabs(line: readonly Cell[]): Cell[] {
+  if (!line.some((cell) => cell.ch === TAB)) return [...line];
+  const out: Cell[] = [];
+  let position = 0;
+  for (const cell of line) {
+    if (cell.ch !== TAB) {
+      out.push(cell);
+      position += displayWidth(cell.ch);
+      continue;
+    }
+    out.push({ ch: BLANK, style: cell.style });
+    position += 1;
+    const remainder = position % TAB_SIZE;
+    if (remainder === 0) continue;
+    for (let n = TAB_SIZE - remainder; n > 0; n--) out.push({ ch: BLANK, style: cell.style, runs: true });
+    position += TAB_SIZE - remainder;
+  }
+  return out;
 }
 
 /** The lines of a cell run, the breaks themselves dropped. A blank line is kept, the way `allow_blank` keeps one. */
@@ -387,16 +438,35 @@ function splitCells(cells: readonly Cell[]): Cell[][] {
 function renderCells(cells: readonly Cell[], background?: Background): string {
   let out = "";
   let bare = "";
+  /** The codes of the span left OPEN, which only a cell flagged `runs` may write into rather than reopen. */
+  let open: string | null = null;
+  const close = (): void => {
+    if (open === null) return;
+    out += RESET;
+    open = null;
+  };
   for (const cell of cells) {
     if (cell.style === NO_CELL_STYLE) {
+      close();
       bare += cell.ch;
       continue;
     }
+    const codes = styleCodes(cell.style, background);
+    if (open !== null && cell.runs === true && open === codes) {
+      out += cell.ch;
+      continue;
+    }
+    close();
     out += bare;
     bare = "";
-    const codes = styleCodes(cell.style, background);
-    out += codes === "" ? cell.ch : `${CSI}${codes}${SGR_END}${cell.ch}${RESET}`;
+    if (codes === "") {
+      out += cell.ch;
+      continue;
+    }
+    out += `${CSI}${codes}${SGR_END}${cell.ch}`;
+    open = codes;
   }
+  close();
   return out + bare;
 }
 

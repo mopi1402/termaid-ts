@@ -15,6 +15,12 @@ const BAR_WIDTH = 4;
 const BAR_GAP = 2;
 /** Columns left of the axis for the values written down it. */
 const MARGIN_L = 8;
+/** What tells the label apart from a subtitle: it names the axis running UP the chart. */
+const Y_MARK = "↑";
+const Y_MARK_ASCII = "^";
+/** Turned sideways, the value axis runs across, so its mark points along it. */
+const Y_MARK_H = "→";
+const Y_MARK_ASCII_H = ">";
 const EMPTY_SIZE = 1;
 /** How many values are written along an axis, plus the one at the origin. */
 const TICKS = 5;
@@ -81,23 +87,30 @@ function renderVertical(diagram: XYChart, useAscii: boolean, rounded: boolean): 
 
   const chartWidth = points * (columnWidth + BAR_GAP) - BAR_GAP;
   const titleRows = diagram.title !== "" ? 2 : 0;
-  const canvas = new Canvas(MARGIN_L + 1 + chartWidth + 2 + 1, CHART_H + 4 + titleRows + 1);
+  // ◉ The y-axis label, parsed into the model by both sides and read by neither renderer: `renderer/xychart.py` names
+  // `x_label` six times and `y_label` not once. Given a line of its own under the title, marked with the axis it
+  // names, and costing a row only where a chart declares one.
+  const yLabelLine = diagram.yLabel === "" ? "" : `${useAscii ? Y_MARK_ASCII : Y_MARK} ${diagram.yLabel}`;
+  const headRows = titleRows + (yLabelLine === "" ? 0 : 1);
+  const canvas = new Canvas(MARGIN_L + 1 + chartWidth + 2 + 1, CHART_H + 4 + headRows + 1);
 
   if (diagram.title !== "") {
     const at = MARGIN_L + Math.floor((chartWidth - displayWidth(diagram.title)) / 2);
     canvas.putText(0, Math.max(0, at), diagram.title, STYLE_LABEL);
   }
 
+  if (yLabelLine !== "") canvas.putText(titleRows, 0, yLabelLine, STYLE_AXIS_LABEL);
+
   for (let i = 0; i <= TICKS; i++) {
     const label = formatValue(low + (span * (TICKS - i)) / TICKS);
-    const row = titleRows + Math.floor((i * CHART_H) / TICKS);
+    const row = headRows + Math.floor((i * CHART_H) / TICKS);
     canvas.putText(row, Math.max(0, MARGIN_L - displayWidth(label) - 1), label, STYLE_AXIS_LABEL);
     canvas.put(row, MARGIN_L, leftTick, false, STYLE_EDGE);
   }
 
-  for (let r = titleRows; r <= titleRows + CHART_H; r++) canvas.put(r, MARGIN_L, vertical, false, STYLE_EDGE);
+  for (let r = headRows; r <= headRows + CHART_H; r++) canvas.put(r, MARGIN_L, vertical, false, STYLE_EDGE);
 
-  const axisRow = titleRows + CHART_H;
+  const axisRow = headRows + CHART_H;
   canvas.put(axisRow, MARGIN_L, corner, false, STYLE_EDGE);
   for (let c = MARGIN_L + 1; c < MARGIN_L + 1 + chartWidth; c++) canvas.put(axisRow, c, horizontal, false, STYLE_EDGE);
 
@@ -113,25 +126,25 @@ function renderVertical(diagram: XYChart, useAscii: boolean, rounded: boolean): 
       if (ds.chartType === "bar") {
         for (let r = 0; r < bars; r++) {
           for (let c = 0; c < columnWidth; c++) {
-            canvas.put(titleRows + CHART_H - 1 - r, left + c, barChar, false, sectionStyle(i));
+            canvas.put(headRows + CHART_H - 1 - r, left + c, barChar, false, sectionStyle(i));
           }
         }
         const leftover = ((value - low) / span) * CHART_H - bars;
         if (leftover > HALF_BLOCK_SHARE && bars < CHART_H) {
           for (let c = 0; c < columnWidth; c++) {
-            canvas.put(titleRows + CHART_H - 1 - bars, left + c, barHalf, false, sectionStyle(i));
+            canvas.put(headRows + CHART_H - 1 - bars, left + c, barHalf, false, sectionStyle(i));
           }
         }
         return;
       }
 
-      const row = titleRows + CHART_H - 1 - Math.max(0, bars - 1);
+      const row = headRows + CHART_H - 1 - Math.max(0, bars - 1);
       const middle = left + Math.floor(columnWidth / 2);
       canvas.put(row, middle, horizontal, false, STYLE_EDGE);
 
       if (i > 0) {
         const previous = heightOf(ds.values[i - 1] as number);
-        const previousRow = titleRows + CHART_H - 1 - Math.max(0, previous - 1);
+        const previousRow = headRows + CHART_H - 1 - Math.max(0, previous - 1);
         const previousMiddle = columnOf(i - 1) + Math.floor(columnWidth / 2);
         connect(canvas, previousMiddle, previousRow, middle, row, useAscii, rounded);
       }
@@ -170,16 +183,21 @@ function renderHorizontal(diagram: XYChart, useAscii: boolean): Canvas {
   // One row per bar, one blank row between them.
   const chartHeight = points * 2 - 1;
   const titleRows = diagram.title !== "" ? 2 : 0;
-  const canvas = new Canvas(marginLeft + 1 + CHART_W + 2 + 1, titleRows + chartHeight + 3 + 1);
+  // ◉ Same label, same silence on the reference's side, and the same line of its own here. Turned sideways the value
+  // axis is the one running ACROSS, so the mark points the way this chart actually reads.
+  const yLabelLine = diagram.yLabel === "" ? "" : `${useAscii ? Y_MARK_ASCII_H : Y_MARK_H} ${diagram.yLabel}`;
+  const headRows = titleRows + (yLabelLine === "" ? 0 : 1);
+  const canvas = new Canvas(marginLeft + 1 + CHART_W + 2 + 1, headRows + chartHeight + 3 + 1);
 
   if (diagram.title !== "") {
     const at = marginLeft + Math.floor((CHART_W - displayWidth(diagram.title)) / 2);
     canvas.putText(0, Math.max(0, at), diagram.title, STYLE_LABEL);
   }
+  if (yLabelLine !== "") canvas.putText(titleRows, 0, yLabelLine, STYLE_AXIS_LABEL);
 
-  for (let r = titleRows; r <= titleRows + chartHeight; r++) canvas.put(r, marginLeft, vertical, false, STYLE_EDGE);
+  for (let r = headRows; r <= headRows + chartHeight; r++) canvas.put(r, marginLeft, vertical, false, STYLE_EDGE);
 
-  const axisRow = titleRows + chartHeight;
+  const axisRow = headRows + chartHeight;
   canvas.put(axisRow, marginLeft, corner, false, STYLE_EDGE);
   for (let c = marginLeft + 1; c < marginLeft + 1 + CHART_W; c++) canvas.put(axisRow, c, horizontal, false, STYLE_EDGE);
 
@@ -198,7 +216,7 @@ function renderHorizontal(diagram: XYChart, useAscii: boolean): Canvas {
   for (const ds of diagram.datasets) {
     ds.values.forEach((value, i) => {
       if (i >= points) return;
-      const row = titleRows + i * 2;
+      const row = headRows + i * 2;
       const bars = Math.trunc(((value - low) / span) * CHART_W);
 
       const category = categories[i] ?? "";

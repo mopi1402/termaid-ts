@@ -13,7 +13,7 @@ import {
   type Event,
   type SequenceDiagram,
 } from "../model/sequence.js";
-import { pyRepr } from "../pycompat.js";
+import { pyRepr, pyStrip } from "../pycompat.js";
 
 /** Every arrow, LONGEST first, so `-->>` is never read as `-->` followed by a stray `>`. */
 const ARROW_PATTERNS: ReadonlyArray<readonly [string, string, string]> = [
@@ -78,7 +78,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
   const target = (): Event[] => eventStack[eventStack.length - 1] as Event[];
 
   for (const line of text.split(NEWLINE)) {
-    const stripped = line.trim();
+    const stripped = pyStrip(line);
 
     if (stripped === "" || stripped.startsWith(HEADER) || stripped.startsWith(COMMENT)) continue;
 
@@ -97,7 +97,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
 
     const section = BLOCK_SECTION_RE.exec(stripped);
     if (section !== null && blockStack.length > 0) {
-      const opened: BlockSection = { label: (section[2] as string).trim(), events: [] };
+      const opened: BlockSection = { label: pyStrip((section[2] as string)), events: [] };
       (blockStack[blockStack.length - 1] as Block).sections.push(opened);
       eventStack[eventStack.length - 1] = opened.events;
       continue;
@@ -108,7 +108,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
       const block: Block = {
         type: "block",
         kind: (started[1] as string).toLowerCase(),
-        label: (started[2] as string).trim(),
+        label: pyStrip((started[2] as string)),
         events: [],
         sections: [],
       };
@@ -138,7 +138,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
       for (const id of participants) ensureParticipant(diagram, id);
       target().push({
         type: "note",
-        text: (note[4] as string).trim().replace(BREAK_TAG_RE, NEWLINE),
+        text: pyStrip((note[4] as string)).replace(BREAK_TAG_RE, NEWLINE),
         position: (note[1] as string).toLowerCase().replace(POSITION_SPACE_RE, ""),
         participants,
       });
@@ -157,7 +157,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
     if (declared !== null) {
       const kind = (declared[1] as string).toLowerCase();
       const id = declared[2] as string;
-      const label = declared[3] === undefined ? id : declared[3].trim();
+      const label = declared[3] === undefined ? id : pyStrip(declared[3]);
       const existing = diagram.participants.find((participant) => participant.id === id);
       if (existing === undefined) diagram.participants.push(makeParticipant(id, label, kind));
       else {
@@ -180,7 +180,7 @@ export function parseSequenceDiagram(text: string): SequenceDiagram {
         type: "message",
         source,
         target: messageTarget,
-        label: message[4] === undefined ? "" : message[4].trim(),
+        label: message[4] === undefined ? "" : pyStrip(message[4]),
         lineType,
         arrowType,
       });

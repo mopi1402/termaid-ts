@@ -1,0 +1,7 @@
+stateDiagram-v2
+    [*] --> Active
+    state Active {
+        Ready --> Working : pick
+        Working --> Ready : done
+    }
+    Active --> [*]

@@ -2,8 +2,23 @@
 
 This file records what THIS package changes, release by release. The upstream
 [termaid](https://github.com/fasouto/termaid) keeps its own history: the version's major.minor names the termaid
-release the port reproduces, and the patch counts this package's own additions on top of it. An entry marked ◉ is
-such an addition, with no counterpart in termaid; every other entry ports something the upstream did.
+release the port reproduces, and the patch counts this package's own additions on top of it. An entry marked ◉ is this
+package's own: an addition with no counterpart in termaid, or a deliberate divergence from it; every other entry ports
+something the upstream did.
+
+## 0.8.3 (unreleased)
+
+- ◉ A `pie` title written on the header line is read, where the reference drops it and leaves the chart untitled
+- ◉ The y-axis label is drawn, in `xychart-beta` and `quadrantChart`, both parsing it into the model and neither
+  renderer ever reading it back
+- ◉ An edge label is never written over what is already drawn, nor cut without a mark: it takes a clear row instead
+- `fixtures/divergences/` freezes what this port draws alone, kept out of the parity corpus and its mutants
+- `str.strip()` spelled out rather than approximated by `trim()`, which disagrees with it on six code points
+- Rich's `strip_control_codes` and `expand_tabs` ported, the two steps a painted text takes and a plain one does not
+- A layering key holds its endpoints instead of joining them, so an id carrying the separator no longer flattens the graph
+- `scripts/probe.ts`, `scripts/probe-controls.ts` and `scripts/audit.ts` keep the probes that found the porting bugs and
+  the audit that holds all 18 types against silent information loss, each naming the divergences it assumes
+- Test discovery is pinned to `tests/`, so a checkout read on the side under `tmp/` no longer answers for this suite
 
 ## 0.8.2 (2026-08-15)
 
@@ -18,3 +33,4 @@ such an addition, with no counterpart in termaid; every other entry ports someth
 ## 0.8.0 (2026-08-13, termaid 0.8.0)
 
 - Initial release: the termaid 0.8.0 renderer ported to TypeScript, held to byte parity with the reference
+- ◉ A leading BOM is taken off before the header is read, where the reference keeps it and loses the diagram

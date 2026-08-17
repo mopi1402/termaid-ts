@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { jsonToMermaid } from "./ingest.js";
 import { parse, render, renderThemedText, type Options } from "./index.js";
 import { printToConsole, Text } from "./richcompat.js";
-import { ljust } from "./pycompat.js";
+import { ljust, pyStrip } from "./pycompat.js";
 import { displayWidth } from "./utils.js";
 
 const PROGRAM = "termaid";
@@ -136,7 +136,7 @@ function version(): string {
 class UsageError extends Error {}
 
 const asInteger = (flag: string, text: string): number => {
-  if (!/^[+-]?\d+$/.test(text.trim())) throw new UsageError(`argument ${flag}: invalid int value: '${text}'`);
+  if (!/^[+-]?\d+$/.test(pyStrip(text))) throw new UsageError(`argument ${flag}: invalid int value: '${text}'`);
   return Number.parseInt(text, 10);
 };
 
@@ -498,7 +498,7 @@ export function main(argv: readonly string[]): number {
   let source = readSource(args);
   if (source === null) return FAILED;
 
-  source = source.trim();
+  source = pyStrip(source);
   if (source === "") {
     err("Error: Empty input.");
     return FAILED;

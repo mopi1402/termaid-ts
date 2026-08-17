@@ -3,14 +3,14 @@
 // The tree is written by INDENTATION: a line deeper than the one above it is its child.
 
 import { makeTreemap, makeTreemapNode, type Treemap, type TreemapNode } from "../model/treemap.js";
-import { splitLines } from "../pycompat.js";
+import { pyStrip, splitLines } from "../pycompat.js";
 
 const COMMENT = "%%";
 const NODE_RE = /^(\s*)"([^"]+)"(?:\s*:\s*([0-9]+(?:\.[0-9]*)?))?/;
 
 /** A mermaid treemap definition. */
 export function parseTreemap(text: string): Treemap {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const treemap = makeTreemap();
   if (lines.length === 0) return treemap;
 

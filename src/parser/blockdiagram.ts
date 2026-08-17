@@ -12,7 +12,7 @@ import {
   type BlockDiagram,
   type BlockLink,
 } from "../model/blockdiagram.js";
-import { PY_WORD, PY_WORD_CHARS } from "../pycompat.js";
+import { PY_WORD, PY_WORD_CHARS, pyStrip } from "../pycompat.js";
 
 const W = PY_WORD;
 
@@ -69,12 +69,12 @@ export function parseBlockDiagram(text: string): BlockDiagram {
 /** The lines that carry something: no comment, no blank, and no header. */
 function preprocess(text: string): string[] {
   const result: string[] = [];
-  for (const raw of text.trim().split("\n")) {
-    let line = raw.trim();
+  for (const raw of pyStrip(text).split("\n")) {
+    let line = pyStrip(raw);
     if (line === "") continue;
     const comment = line.indexOf(COMMENT);
     if (comment >= 0) {
-      line = line.slice(0, comment).trim();
+      line = pyStrip(line.slice(0, comment));
       if (line === "") continue;
     }
     result.push(line);
@@ -110,7 +110,7 @@ class BlockParser {
 
     while (i < this.lines.length) {
       const line = this.lines[i] as string;
-      const lower = line.toLowerCase().trim();
+      const lower = pyStrip(line.toLowerCase());
 
       if (lower === END) return { blocks, links, columns, next: i + 1 };
 
@@ -202,7 +202,7 @@ class BlockParser {
     if (arrow !== null) {
       const label = unescapeHtml(arrow[2] as string);
       // A block arrow labelled with nothing but blanks is a connector, so it takes a cell and draws nothing.
-      if (label.trim() === "") return makeBlock(arrow[1] as string, { isSpace: true });
+      if (pyStrip(label) === "") return makeBlock(arrow[1] as string, { isSpace: true });
       return makeBlock(arrow[1] as string, { label });
     }
 
@@ -219,12 +219,12 @@ class BlockParser {
       if (at <= 0) continue;
       const rest = token.slice(at + open.length);
       if (!rest.endsWith(close)) continue;
-      const id = token.slice(0, at).trim();
+      const id = pyStrip(token.slice(0, at));
       if (id === "") continue;
-      return makeBlock(id, { label: stripQuotes(rest.slice(0, rest.length - close.length).trim()), shape, colSpan });
+      return makeBlock(id, { label: stripQuotes(pyStrip(rest.slice(0, rest.length - close.length))), shape, colSpan });
     }
 
-    const id = token.trim();
+    const id = pyStrip(token);
     if (id !== "" && BARE_ID_RE.test(id)) return makeBlock(id, { label: id, colSpan });
     return null;
   }
@@ -259,9 +259,9 @@ function parseLink(line: string): { link: BlockLink; tokens: [string, string] } 
 function blockId(token: string): string {
   for (const [open] of SHAPE_PATTERNS) {
     const at = token.indexOf(open);
-    if (at > 0) return token.slice(0, at).trim();
+    if (at > 0) return pyStrip(token.slice(0, at));
   }
-  return token.trim();
+  return pyStrip(token);
 }
 
 /** A line split on the blanks that are OUTSIDE every bracket, so a label may hold spaces of its own. */
@@ -271,7 +271,7 @@ function tokenize(line: string): string[] {
   let depth = 0;
 
   const flush = (): void => {
-    const token = current.trim();
+    const token = pyStrip(current);
     if (token !== "") tokens.push(token);
     current = "";
   };

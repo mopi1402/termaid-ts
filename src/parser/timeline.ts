@@ -1,7 +1,7 @@
 // Ported from src/termaid/parser/timeline.py.
 
 import { makeTimeline, makeTimelineEvent, makeTimelineSection, type Timeline, type TimelineSection } from "../model/timeline.js";
-import { splitLines } from "../pycompat.js";
+import { pyStrip, splitLines } from "../pycompat.js";
 
 const COMMENT = "%%";
 const TITLE = "title ";
@@ -12,7 +12,7 @@ const DETAIL_SEPARATOR = ",";
 
 /** A mermaid timeline definition. */
 export function parseTimeline(text: string): Timeline {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const timeline = makeTimeline();
   if (lines.length === 0) return timeline;
 
@@ -22,17 +22,17 @@ export function parseTimeline(text: string): Timeline {
     const comment = line.indexOf(COMMENT);
     if (comment >= 0) line = line.slice(0, comment);
 
-    const stripped = line.trim();
+    const stripped = pyStrip(line);
     if (stripped === "") continue;
 
     const lower = stripped.toLowerCase();
     if (lower.startsWith(TITLE)) {
-      timeline.title = stripped.slice(TITLE.length).trim();
+      timeline.title = pyStrip(stripped.slice(TITLE.length));
       continue;
     }
 
     if (lower.startsWith(SECTION)) {
-      section = makeTimelineSection(stripped.slice(SECTION.length).trim());
+      section = makeTimelineSection(pyStrip(stripped.slice(SECTION.length)));
       timeline.sections.push(section);
       continue;
     }
@@ -50,11 +50,11 @@ export function parseTimeline(text: string): Timeline {
         ? stripped
             .slice(at + DETAILS.length)
             .split(DETAIL_SEPARATOR)
-            .map((d) => d.trim())
+            .map((d) => pyStrip(d))
             .filter((d) => d !== "")
         : [];
 
-    section.events.push(makeTimelineEvent(title.trim(), details));
+    section.events.push(makeTimelineEvent(pyStrip(title), details));
   }
 
   return timeline;

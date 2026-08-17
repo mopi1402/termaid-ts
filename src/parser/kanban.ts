@@ -3,7 +3,7 @@
 // A board is written by INDENTATION alone: the shallowest lines are the columns, everything deeper is a card.
 
 import { makeKanban, makeKanbanColumn, type Kanban, type KanbanColumn } from "../model/kanban.js";
-import { lstrip, PY_WORD, rstrip, splitLines, stripChars } from "../pycompat.js";
+import { lstrip, PY_WORD, pyStrip, rstrip, splitLines, stripChars } from "../pycompat.js";
 
 const COMMENT = "%%";
 /** The `id[Title]` form, where only the bracketed half is shown. */
@@ -16,12 +16,12 @@ const TAG = "@";
 /** A line's own text, the `id[Title]` wrapper and the quotes taken off. */
 function cleanTitle(text: string): string {
   const titled = TITLED_RE.exec(text);
-  return stripChars((titled === null ? text : (titled[1] as string)).trim(), QUOTES);
+  return stripChars(pyStrip((titled === null ? text : (titled[1] as string))), QUOTES);
 }
 
 /** A mermaid kanban definition. */
 export function parseKanban(text: string): Kanban {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const board = makeKanban();
   if (lines.length === 0) return board;
 
@@ -31,8 +31,8 @@ export function parseKanban(text: string): Kanban {
     if (comment >= 0) line = line.slice(0, comment);
 
     const stripped = rstrip(line);
-    if (stripped.trim() === "") continue;
-    body.push([stripped.length - lstrip(stripped).length, stripped.trim()]);
+    if (pyStrip(stripped) === "") continue;
+    body.push([stripped.length - lstrip(stripped).length, pyStrip(stripped)]);
   }
   if (body.length === 0) return board;
 
@@ -57,8 +57,8 @@ export function parseKanban(text: string): Kanban {
     let metadata = "";
     const at = title.lastIndexOf(TAG);
     if (at >= 0) {
-      metadata = TAG + title.slice(at + TAG.length).trim();
-      title = title.slice(0, at).trim();
+      metadata = TAG + pyStrip(title.slice(at + TAG.length));
+      title = pyStrip(title.slice(0, at));
     }
 
     column.cards.push({ title: cleanTitle(title), metadata });

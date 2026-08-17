@@ -213,7 +213,7 @@ interface Divergence {
   got: string;
 }
 
-const divergences: Divergence[] = [];
+let divergences: Divergence[] = [];
 /**
  * Cases where the REFERENCE does not agree with itself. `parser/architecture.py` collects the edges a junction
  * collapses into a `set` and iterates it, so their order follows CPython's randomised string hashing: which of two
@@ -395,7 +395,49 @@ async function checkCli(): Promise<void> {
 
 // ---------------------------------------------------------------------------------------------- the report
 
+/**
+ * Where the port diverges ON PURPOSE, each entry carrying the reason it does. A case named here is still run and still
+ * compared: only the verdict changes. So the day one of them stops diverging, this list is what says so out loud,
+ * which is the whole reason an allowance is written here rather than the case being dropped from the corpus.
+ *
+ * Nothing in `fixtures/` belongs here: a divergence covered by a fixture would spread to every mutant derived from it,
+ * so an assumed one is covered by a test of its own under `tests/` instead, and the corpus stays the parity corpus.
+ */
+const ASSUMED: ReadonlyArray<readonly [string, string]> = [
+  [
+    "cli:demo-all",
+    "the demo's own pie writes `pie title Languages` on its header line, and the reference drops it (◉ 0.8.3)",
+  ],
+  // Matched on the PREFIX, so one reason covers a case at every profile it is run through rather than once per line.
+  [
+    "state-direction~",
+    "a back edge's label is written INSIDE a node box by the reference, and given a clear row here (◉ 0.8.3)",
+  ],
+  [
+    "state-endpoints~",
+    "a back edge's label is written INSIDE a node box by the reference, and given a clear row here (◉ 0.8.3)",
+  ],
+];
+
+/** The reason this case is allowed to diverge, or nothing at all where it is not. */
+const assumedFor = (label: string): string | undefined => ASSUMED.find(([at]) => label.startsWith(at))?.[1];
+
 function report(): void {
+  const assumed = divergences.filter((d) => assumedFor(d.label) !== undefined);
+  divergences = divergences.filter((d) => assumedFor(d.label) === undefined);
+
+  if (assumed.length > 0) {
+    console.log(`divergences assumees : ${assumed.length}`);
+    for (const [at, why] of ASSUMED) {
+      const hits = assumed.filter((d) => d.label.startsWith(at));
+      if (hits.length > 0) console.log(`  ${at} (${hits.length}) : ${why}`);
+    }
+  }
+  // An allowance nobody needs any more is a claim gone stale, and saying so is the only thing that retires it.
+  for (const [at] of ASSUMED) {
+    if (!assumed.some((d) => d.label.startsWith(at))) console.log(`allocation perimee, ce cas ne diverge plus : ${at}`);
+  }
+
   if (divergences.length > 0) {
     fs.mkdirSync(REPORT_DIR, { recursive: true });
     for (const [index, d] of divergences.slice(0, REPORTED).entries()) {

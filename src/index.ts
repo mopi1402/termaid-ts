@@ -42,6 +42,7 @@ import { renderTimeline } from "./renderer/timeline.js";
 import { renderXYChart } from "./renderer/xychart.js";
 import { renderTreemap } from "./renderer/treemap.js";
 import { displayWidth } from "./utils.js";
+import { pyStrip } from "./pycompat.js";
 
 export { Graph } from "./graph/model.js";
 export { parseArchitecture } from "./parser/architecture.js";
@@ -325,13 +326,28 @@ const declared = (text: string): (typeof SPECIALISED)[number] | undefined =>
 const FLOWCHART = "flowchart";
 
 /**
+ * ◉ The byte order mark an editor writes in front of a UTF-8 file, taken off before anything reads the header. The
+ * reference does not: `strip()` leaves it, so the first word becomes `﻿pie` and the source falls to the flowchart
+ * parser, which draws the pie's own syntax as boxes. `pie`, `sequenceDiagram`, `gantt`, `mindmap` and `classDiagram`
+ * all lose their diagram there, and a flowchart keeps only its default direction (measured 2026-08-17).
+ *
+ * What widens is the input ACCEPTED, never the drawing: a source the reference accepts renders its own bytes, since a
+ * BOM is by definition the first character of a file and nowhere else.
+ */
+const BOM = "﻿";
+const withoutBom = (source: string): string => (source.startsWith(BOM) ? source.slice(BOM.length) : source);
+
+/** What every entry point reads instead of the source it was handed: `str.strip()` and no frontmatter. */
+const headed = (source: string): string => pyStrip(withoutBom(source)).replace(FRONTMATTER_RE, "");
+
+/**
  * The type a source DECLARES, read exactly the way the dispatch reads it, or null where it declares none this renderer
  * knows. null is not a refusal here: such a source still falls to the flowchart parser, which draws its lines as node
  * labels, the reference's own behaviour. It is the caller's one chance to tell a type from a NEWER mermaid apart from
  * a diagram, and to show the source rather than boxes of its syntax.
  */
 export function declaredType(source: string): string | null {
-  const text = source.trim().replace(FRONTMATTER_RE, "");
+  const text = headed(source);
   const type = declared(text);
   if (type !== undefined) return type.prefix;
   if (text.startsWith(STATE_DIAGRAM)) return STATE_DIAGRAM;
@@ -340,7 +356,7 @@ export function declaredType(source: string): string | null {
 
 /** A mermaid source as a graph, the type read off its first word. */
 export function parse(source: string): Graph {
-  const text = source.trim().replace(FRONTMATTER_RE, "");
+  const text = headed(source);
   if (text.startsWith(STATE_DIAGRAM)) return parseStateDiagram(text);
   return parseFlowchart(text);
 }
@@ -349,7 +365,7 @@ const widestLine = (text: string): number => Math.max(0, ...text.split("\n").map
 
 /** One drawing, at the sizes given, with no attempt to fit it anywhere. */
 function drawn(source: string, options: Partial<RenderOptions>): string {
-  const text = source.trim().replace(FRONTMATTER_RE, "");
+  const text = headed(source);
   const type = declared(text);
   if (type !== undefined) return type.draw(text, options);
   return renderGraph(parse(text), options);
@@ -357,7 +373,7 @@ function drawn(source: string, options: Partial<RenderOptions>): string {
 
 /** The same drawing, still carrying the style of every cell, which is what a theme needs. */
 function painted(source: string, options: Partial<RenderOptions>, theme: string): Text {
-  const text = source.trim().replace(FRONTMATTER_RE, "");
+  const text = headed(source);
   const type = declared(text);
   if (type !== undefined) return type.paint(text, options, theme);
   return renderRich(parse(text), options, theme);

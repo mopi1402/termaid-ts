@@ -13,7 +13,7 @@ import {
   EdgeStyle,
 } from "../graph/model.js";
 import { NodeShape } from "../graph/shapes.js";
-import { PY_WORD } from "../pycompat.js";
+import { PY_WORD, pyStrip } from "../pycompat.js";
 
 const START_ID = "[*]_start";
 const END_ID = "[*]_end";
@@ -59,7 +59,7 @@ class StateDiagramParser {
     const lines = this.preprocess(this.text);
     if (lines.length === 0) return this.graph;
 
-    const header = (lines[0] as string).trim();
+    const header = pyStrip((lines[0] as string));
     if (header.startsWith(HEADER)) this.graph.direction = Direction.TB;
 
     for (const line of lines.slice(1)) this.parseLine(line);
@@ -72,14 +72,14 @@ class StateDiagramParser {
     for (let line of text.split("\n")) {
       const idx = line.indexOf(COMMENT);
       if (idx >= 0) line = line.slice(0, idx);
-      const stripped = line.trim();
+      const stripped = pyStrip(line);
       if (stripped !== "") result.push(stripped);
     }
     return result;
   }
 
   private parseLine(line: string): void {
-    const lower = line.trim().toLowerCase();
+    const lower = pyStrip(line).toLowerCase();
 
     if (lower.startsWith(DIRECTION_PREFIX)) {
       const parts = line.split(/\s+/).filter((p) => p !== "");
@@ -97,7 +97,7 @@ class StateDiagramParser {
     if (note !== null) {
       const position = (note[1] as string).toLowerCase().replaceAll(" ", "");
       const target = note[2] as string;
-      const text = (note[3] as string).trim().replace(BR_RE, "\n");
+      const text = pyStrip((note[3] as string)).replace(BR_RE, "\n");
       if (!this.graph.nodes.has(target)) {
         this.ensureNode(target, this.aliases.get(target) ?? target, NodeShape.ROUNDED);
       }
@@ -125,7 +125,7 @@ class StateDiagramParser {
 
     const composite = COMPOSITE_RE.exec(line);
     if (composite !== null) {
-      const label = (composite[1] as string).trim();
+      const label = pyStrip((composite[1] as string));
       const parent = this.subgraphStack[this.subgraphStack.length - 1] ?? null;
       const sg = makeSubgraph(label.replaceAll(" ", "_"), label, { parent });
       if (parent !== null) parent.children.push(sg);
@@ -136,15 +136,15 @@ class StateDiagramParser {
 
     const transition = TRANSITION_RE.exec(line);
     if (transition !== null) {
-      const source = this.resolveState((transition[1] as string).trim(), true);
-      const target = this.resolveState((transition[2] as string).trim(), false);
-      const label = (transition[3] ?? "").trim();
+      const source = this.resolveState(pyStrip((transition[1] as string)), true);
+      const target = this.resolveState(pyStrip((transition[2] as string)), false);
+      const label = pyStrip((transition[3] ?? ""));
       this.graph.addEdge(makeEdge(source, target, { label, style: EdgeStyle.SOLID, hasArrowEnd: true }));
       return;
     }
 
-    if (PLAIN_STATE_RE.test(line.trim())) {
-      const id = line.trim();
+    if (PLAIN_STATE_RE.test(pyStrip(line))) {
+      const id = pyStrip(line);
       if (!this.graph.nodes.has(id)) this.ensureNode(id, id, NodeShape.ROUNDED);
     }
   }

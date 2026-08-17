@@ -1,7 +1,7 @@
 // Ported from src/termaid/parser/mindmap.py.
 
 import { makeMindmap, makeMindmapNode, type Mindmap, type MindmapNode } from "../model/mindmap.js";
-import { lstrip, rstrip, splitLines } from "../pycompat.js";
+import { lstrip, pyStrip, rstrip, splitLines } from "../pycompat.js";
 
 const COMMENT = "%%";
 
@@ -10,7 +10,7 @@ const SHAPES: readonly RegExp[] = [/^\((.+)\)$/, /^\[(.+)\]$/, /^\{\{(.+)\}\}$/,
 
 /** A mermaid mindmap definition. */
 export function parseMindmap(text: string): Mindmap {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const mindmap = makeMindmap();
   if (lines.length === 0) return mindmap;
 
@@ -20,9 +20,9 @@ export function parseMindmap(text: string): Mindmap {
     if (comment >= 0) line = line.slice(0, comment);
 
     const stripped = rstrip(line);
-    if (stripped.trim() === "") continue;
+    if (pyStrip(stripped) === "") continue;
 
-    let label = stripped.trim();
+    let label = pyStrip(stripped);
     for (const shape of SHAPES) {
       const wrapped = shape.exec(label);
       if (wrapped !== null) {

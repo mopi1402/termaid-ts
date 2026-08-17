@@ -7,7 +7,7 @@ import { ArrowType, Direction, EdgeStyle, type Graph } from "../graph/model.js";
 import { NodeShape } from "../graph/shapes.js";
 import { computeLayout, type GridLayout } from "../layout/grid.js";
 import { routeEdges, type RoutedEdge } from "../routing/router.js";
-import { displayWidth } from "../utils.js";
+import { displayWidth, truncateToWidth } from "../utils.js";
 import { Canvas } from "./canvas.js";
 import { ASCII, UNICODE, type CharSet } from "./charset.js";
 import { drawRectangle, SHAPE_RENDERERS } from "./shapes.js";
@@ -19,6 +19,8 @@ const STYLE_NODE = "node";
 const STYLE_EDGE = "edge";
 const STYLE_ARROW = "arrow";
 const STYLE_EDGE_LABEL = "edge_label";
+/** What a cut label ends with, so a reader is never handed a truncation that looks like the whole word. */
+const ELLIPSIS = "…";
 const STYLE_LABEL = "label";
 const STYLE_BOLD_LABEL = "bold_label";
 const STYLE_ITALIC_LABEL = "italic_label";
@@ -257,10 +259,39 @@ function drawBoxStart(canvas: Canvas, at: Point, next: Point, cs: CharSet): void
 /** A row already carrying a label takes no other: two labels on one line read as one. */
 const labelOverlaps = (row: number, placed: PlacedLabel[]): boolean => placed.some(([r]) => r === row);
 
+/**
+ * ◉ Whether a label may be written from here without landing on anything already drawn. `put` DROPS a character that
+ * would fall on a protected cell and writes straight over one that is merely occupied, so a placement that is not
+ * clear either loses its tail without a word or lands inside the box next door. Measured 2026-08-17 on two
+ * transitions between the same pair of states: `Cobalt` came out `Cobalt` cut to `Coba` against a box border, and its
+ * sibling was drawn INSIDE the neighbouring node. The reference does both; a label that lies is not worth reproducing.
+ */
+function labelFits(canvas: Canvas, row: number, col: number, label: string): boolean {
+  if (row < 0 || col < 0) return false;
+  // Past an edge the canvas is grown into blank cells, so only what already exists can be in the way.
+  if (row >= canvas.height) return true;
+  const end = Math.min(col + displayWidth(label), canvas.width);
+  // PROTECTED and not merely occupied: a node's whole block is protected, which is both the border a label used to be
+  // cut against and the interior it used to be written into. A subgraph border is not, and the reference writes over
+  // one to keep a label whole, which costs a rule character and reads far better than moving the label away.
+  for (let c = col; c < end; c++) if (canvas.isProtected(row, c)) return false;
+  return true;
+}
+
+/** The label cut to the free run starting here, ending in an ellipsis where anything had to go. */
+function fittedLabel(canvas: Canvas, row: number, col: number, label: string): string {
+  if (labelFits(canvas, row, col, label)) return label;
+  let free = 0;
+  while (col + free < canvas.width && row < canvas.height && !canvas.isProtected(row, col + free)) free++;
+  if (free <= 1) return "";
+  return truncateToWidth(label, free, ELLIPSIS);
+}
+
 function tryPlaceLabel(canvas: Canvas, row: number, col: number, label: string, placed: PlacedLabel[]): boolean {
   const colEnd = col + displayWidth(label);
   if (col < 0 || row < 0) return false;
   if (labelOverlaps(row, placed)) return false;
+  if (!labelFits(canvas, row, col, label)) return false;
   const neededWidth = colEnd + 1;
   const neededHeight = row + 1;
   if (neededWidth > canvas.width || neededHeight > canvas.height) {
@@ -379,9 +410,30 @@ function drawEdgeLabel(canvas: Canvas, re: RoutedEdge, placed: PlacedLabel[]): v
     if (tryPlaceOnSegment(canvas, x1, y1, x2, y2, label, placed, prev, straight, straight)) return;
   }
 
+  // Nowhere clear was found. The label still goes on the canvas, but CUT to the room there actually is and marked as
+  // cut, since a silent truncation reads as a shorter label and not as a missing one.
+  // Nowhere along the path was clear. The rows around its middle are tried in turn, whole label first, because a
+  // label moved a row from its edge still reads and a label dropped does not. Only when none of them has the room
+  // does it go down CUT, and marked as cut: a silent truncation reads as a shorter label, never as a missing one.
   const [mx, my] = path[Math.floor(path.length / 2)] as Point;
-  canvas.putText(my - 1, mx + 1, label, STYLE_EDGE_LABEL);
-  placed.push([my - 1, mx + 1, mx + 1 + displayWidth(label)]);
+  const col = mx + 1;
+  const rows: number[] = [my - 1];
+  for (let off = 1; off <= LABEL_SEARCH; off++) rows.push(my - 1 - off, my - 1 + off);
+
+  for (const row of rows) {
+    if (row < 0 || labelOverlaps(row, placed) || !labelFits(canvas, row, col, label)) continue;
+    canvas.putText(row, col, label, STYLE_EDGE_LABEL);
+    placed.push([row, col, col + displayWidth(label)]);
+    return;
+  }
+  for (const row of rows) {
+    if (row < 0 || labelOverlaps(row, placed)) continue;
+    const shown = fittedLabel(canvas, row, col, label);
+    if (shown === "") continue;
+    canvas.putText(row, col, shown, STYLE_EDGE_LABEL);
+    placed.push([row, col, col + displayWidth(shown)]);
+    return;
+  }
 }
 
 /**

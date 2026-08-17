@@ -1,7 +1,7 @@
 // Ported from src/termaid/parser/gitgraph.py.
 
 import { MAIN_BRANCH, makeGitGraph, type Commit, type CommitType, type GitGraph } from "../model/gitgraph.js";
-import { pyRepr as repr, stripChars } from "../pycompat.js";
+import { pyRepr as repr, pyStrip, stripChars } from "../pycompat.js";
 
 const COMMENT = "%%";
 const DIRECTIVE = "%%{";
@@ -61,7 +61,7 @@ class GitGraphParser {
     const header = remaining[0] as string;
     let body = remaining;
     if (header.startsWith(HEADER)) {
-      const direction = DIRECTION_RE.exec(header.slice(HEADER.length).trim());
+      const direction = DIRECTION_RE.exec(pyStrip(header.slice(HEADER.length)));
       if (direction !== null) this.diagram.direction = (direction[1] as string).toUpperCase();
       body = remaining.slice(1);
     }
@@ -76,7 +76,7 @@ class GitGraphParser {
   private preprocess(text: string): string[] {
     const result: string[] = [];
     for (const line of text.split("\n")) {
-      const stripped = line.trim();
+      const stripped = pyStrip(line);
       if (stripped.startsWith(COMMENT) && !stripped.startsWith(DIRECTIVE)) continue;
       if (stripped !== "") result.push(stripped);
     }
@@ -113,9 +113,9 @@ class GitGraphParser {
     if (line.startsWith(BRANCH)) return this.parseBranch(line);
 
     if (line.startsWith(CHECKOUT) || line.startsWith(SWITCH)) {
-      const rest = line.slice(line.search(/\s/)).trim();
+      const rest = pyStrip(line.slice(line.search(/\s/)));
       if (rest !== "") {
-        const name = stripChars(rest.trim(), QUOTE);
+        const name = stripChars(pyStrip(rest), QUOTE);
         if (this.branchNames.has(name)) this.currentBranch = name;
         else this.diagram.warnings.push(`Checkout non-existent branch: ${repr(name)}`);
       }
@@ -169,7 +169,7 @@ class GitGraphParser {
   private parseBranch(line: string): void {
     const branch = BRANCH_RE.exec(line);
     if (branch === null) return;
-    const name = (branch[1] as string).trim();
+    const name = pyStrip((branch[1] as string));
     const order = branch[2] === undefined ? NO_ORDER : Number.parseInt(branch[2], 10);
 
     this.ensureBranch(name, order, this.heads.get(this.currentBranch) ?? "");
@@ -183,7 +183,7 @@ class GitGraphParser {
   private parseMerge(line: string): void {
     const merge = MERGE_RE.exec(line);
     if (merge === null) return;
-    const merged = (merge[1] as string).trim();
+    const merged = pyStrip((merge[1] as string));
 
     const { id, type, tag } = this.attributes(line);
     const parents = this.parentsOfHead();
@@ -216,7 +216,7 @@ class GitGraphParser {
   private parseReset(line: string): void {
     const reset = RESET_RE.exec(line);
     if (reset === null) return;
-    const ref = (reset[1] as string).trim();
+    const ref = pyStrip((reset[1] as string));
     const back = reset[2] === undefined ? 0 : Number.parseInt(reset[2], 10);
 
     let id = this.heads.get(ref);

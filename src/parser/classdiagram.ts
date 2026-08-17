@@ -11,7 +11,7 @@ import {
   type ClassDiagram,
   type Member,
 } from "../model/classdiagram.js";
-import { PY_WORD, pyRepr, stripChars } from "../pycompat.js";
+import { PY_WORD, pyRepr, pyStrip, stripChars } from "../pycompat.js";
 
 const W = PY_WORD;
 const FRONTMATTER_RE = /^---\s*\n[\s\S]*?\n---\s*\n/;
@@ -51,7 +51,7 @@ const isUpper = (ch: string): boolean => ch.toLowerCase() !== ch.toUpperCase() &
 
 /** One member line: its visibility, its classifier, whether it is a method, and what it returns. */
 function parseMemberText(written: string): Member {
-  let text = written.trim();
+  let text = pyStrip(written);
   let visibility = "";
   let classifier = "";
 
@@ -63,7 +63,7 @@ function parseMemberText(written: string): Member {
     classifier = text[text.length - 1] as string;
     text = text.slice(0, -1);
   }
-  text = text.trim();
+  text = pyStrip(text);
 
   const isMethod = text.includes("(") && text.includes(")");
   let returnType = "";
@@ -71,7 +71,7 @@ function parseMemberText(written: string): Member {
   if (isMethod) {
     // What follows the closing parenthesis is what the method returns.
     const end = text.lastIndexOf(")");
-    const after = text.slice(end + 1).trim();
+    const after = pyStrip(text.slice(end + 1));
     if (after !== "") {
       returnType = after;
       text = text.slice(0, end + 1);
@@ -88,7 +88,7 @@ function parseMemberText(written: string): Member {
     }
   }
 
-  return { name: text.trim(), visibility, returnType, isMethod, classifier };
+  return { name: pyStrip(text), visibility, returnType, isMethod, classifier };
 }
 
 function ensureClass(diagram: ClassDiagram, name: string): void {
@@ -102,7 +102,7 @@ export function parseClassDiagram(text: string): ClassDiagram {
   let i = 0;
 
   while (i < lines.length) {
-    const stripped = (lines[i] as string).trim();
+    const stripped = pyStrip((lines[i] as string));
     i += 1;
 
     if (
@@ -155,7 +155,7 @@ export function parseClassDiagram(text: string): ClassDiagram {
       if (braced[2] !== undefined) cls.annotation = stripBrackets(braced[2]);
 
       while (i < lines.length) {
-        const body = (lines[i] as string).trim();
+        const body = pyStrip((lines[i] as string));
         i += 1;
         if (body === CLOSING_BRACE) break;
         if (body === "") continue;
@@ -191,7 +191,7 @@ export function parseClassDiagram(text: string): ClassDiagram {
         sourceMarker: relationship[3] ?? "",
         targetMarker: relationship[5] ?? "",
         lineStyle: (relationship[4] as string).includes("..") ? DASHED : SOLID,
-        label: (relationship[8] ?? "").trim(),
+        label: pyStrip((relationship[8] ?? "")),
         sourceCard: relationship[2] ?? "",
         targetCard: relationship[6] ?? "",
       });

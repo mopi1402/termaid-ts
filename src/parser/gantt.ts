@@ -8,7 +8,7 @@ import {
   type GanttSection,
   type GanttTask,
 } from "../model/gantt.js";
-import { PY_WORD, pyInt, splitLines } from "../pycompat.js";
+import { PY_WORD, pyInt, pyStrip, splitLines } from "../pycompat.js";
 import { fromYMD, strptime, type CivilDate } from "../pydate.js";
 
 const COMMENT = "%%";
@@ -59,7 +59,7 @@ const DAYS_PER_MONTH = 30;
 
 /** A mermaid gantt definition. */
 export function parseGantt(text: string): Gantt {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const gantt = makeGantt();
   if (lines.length === 0) return gantt;
 
@@ -70,17 +70,17 @@ export function parseGantt(text: string): Gantt {
     const comment = line.indexOf(COMMENT);
     if (comment >= 0) line = line.slice(0, comment);
 
-    const stripped = line.trim();
+    const stripped = pyStrip(line);
     if (stripped === "") continue;
     const lower = stripped.toLowerCase();
 
     if (lower.startsWith(TITLE)) {
-      gantt.title = stripped.slice(TITLE.length).trim();
+      gantt.title = pyStrip(stripped.slice(TITLE.length));
       continue;
     }
 
     if (lower.startsWith(DATE_FORMAT)) {
-      gantt.dateFormat = stripped.slice(DATE_FORMAT.length).trim();
+      gantt.dateFormat = pyStrip(stripped.slice(DATE_FORMAT.length));
       continue;
     }
 
@@ -92,13 +92,13 @@ export function parseGantt(text: string): Gantt {
     }
 
     if (lower.startsWith(VERTICAL)) {
-      const marker = parseDate(stripped.slice(VERTICAL.length).trim(), gantt.dateFormat);
+      const marker = parseDate(pyStrip(stripped.slice(VERTICAL.length)), gantt.dateFormat);
       if (marker !== null) gantt.verticalMarkers.push(marker);
       continue;
     }
 
     if (lower.startsWith(SECTION)) {
-      section = makeGanttSection(stripped.slice(SECTION.length).trim());
+      section = makeGanttSection(pyStrip(stripped.slice(SECTION.length)));
       gantt.sections.push(section);
       continue;
     }
@@ -157,12 +157,12 @@ function parseTask(line: string, dateFormat: string): GanttTask | null {
   const at = line.indexOf(FIELD);
   if (at < 0) return null;
 
-  const task = makeGanttTask(line.slice(0, at).trim());
-  const parts = line
+  const task = makeGanttTask(pyStrip(line.slice(0, at)));
+  const parts = pyStrip(line
     .slice(at + 1)
-    .trim()
+    )
     .split(SEPARATOR)
-    .map((part) => part.trim());
+    .map((part) => pyStrip(part));
 
   const remaining: string[] = [];
   for (const part of parts) {
@@ -176,7 +176,7 @@ function parseTask(line: string, dateFormat: string): GanttTask | null {
 
   for (const part of remaining) {
     if (part.toLowerCase().startsWith(AFTER)) {
-      task.after = part.slice(AFTER.length).trim();
+      task.after = pyStrip(part.slice(AFTER.length));
       continue;
     }
 
@@ -206,7 +206,7 @@ function parseTask(line: string, dateFormat: string): GanttTask | null {
 
 /** A date, read first the way the diagram said to read it, then as ISO, then as the American order. */
 function parseDate(text: string, dateFormat: string): CivilDate | null {
-  const stripped = text.trim();
+  const stripped = pyStrip(text);
 
   if (dateFormat !== "") {
     const format = dateFormat.replace(FORMAT_TOKEN_RE, (token) => {
@@ -240,7 +240,7 @@ function parseDate(text: string, dateFormat: string): CivilDate | null {
 
 /** A duration such as `30d`, `2w` or `3m`, always in days. */
 function parseDuration(text: string): number | null {
-  const duration = DURATION_RE.exec(text.trim().toLowerCase());
+  const duration = DURATION_RE.exec(pyStrip(text).toLowerCase());
   if (duration === null) return null;
   const value = pyInt(duration[1] as string);
   if (value === null) return null;

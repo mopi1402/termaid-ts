@@ -7,7 +7,7 @@
 // Python tells an int from a float and writes them differently, `30` against `30.0`, so the JSON read here keeps the
 // distinction its literals carry: `JSON.parse` alone would flatten both onto one number and print the wrong one.
 
-import { pyFloat, pyFloatStr, pyRepr, splitLines } from "./pycompat.js";
+import { pyFloat, pyFloatStr, pyRepr, pyStrip, splitLines } from "./pycompat.js";
 
 /** A number as Python holds one: its value, and the text `str()` writes for it. */
 interface PyNumber {
@@ -230,8 +230,8 @@ const FIRST_FIELD_RE = /^(\S+)\s+([\s\S]*)$/u;
 /** Tabular input, one `number<space>label` per line, which is the shape `du` and its kind write. */
 function fromTabular(data: string, diagramType: string): string {
   const entries: Array<readonly [string, number]> = [];
-  for (const raw of splitLines(data.trim())) {
-    const line = raw.trim();
+  for (const raw of splitLines(pyStrip(data))) {
+    const line = pyStrip(raw);
     if (line === "") continue;
     const parts = FIRST_FIELD_RE.exec(line);
     if (parts === null) continue;

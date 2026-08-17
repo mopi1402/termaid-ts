@@ -16,6 +16,7 @@ import {
   type Subgraph,
 } from "../graph/model.js";
 import { NodeShape } from "../graph/shapes.js";
+import { pyStrip } from "../pycompat.js";
 
 /** Node shape delimiters, MOST SPECIFIC FIRST: `((` must be tried before `(` or a circle reads as a rounded box. */
 const SHAPE_PATTERNS: ReadonlyArray<readonly [string, string, NodeShape]> = [
@@ -137,10 +138,10 @@ function parseAtShapeProps(body: string): Map<string, string> {
   if (current.length > 0) parts.push(current.join(""));
 
   for (const raw of parts) {
-    const part = raw.trim();
+    const part = pyStrip(raw);
     const at = part.indexOf(":");
     if (at === -1) continue;
-    props.set(part.slice(0, at).trim(), stripChars(part.slice(at + 1).trim(), QUOTE, true, true));
+    props.set(pyStrip(part.slice(0, at)), stripChars(pyStrip(part.slice(at + 1)), QUOTE, true, true));
   }
   return props;
 }
@@ -152,7 +153,7 @@ const stripComments = (line: string): string => {
 
 /** A backtick-quoted markdown label, or null where the label is ordinary text. */
 export function parseMarkdownLabel(text: string): { plain: string; segments: LabelSegment[] } | null {
-  const stripped = text.trim();
+  const stripped = pyStrip(text);
   if (!(stripped.startsWith('"`') && stripped.endsWith('`"'))) return null;
 
   const md = stripped.slice(2, -2);
@@ -195,7 +196,7 @@ function parseCssProps(text: string): Map<string, string> {
   for (const prop of text.split(",")) {
     const at = prop.indexOf(":");
     if (at === -1) continue;
-    props.set(prop.slice(0, at).trim(), prop.slice(at + 1).trim());
+    props.set(pyStrip(prop.slice(0, at)), pyStrip(prop.slice(at + 1)));
   }
   return props;
 }
@@ -331,7 +332,7 @@ class FlowchartParser {
   private preprocess(text: string): string[] {
     const raw: string[] = [];
     for (const line of text.split("\n")) raw.push(...splitOnSemicolons(line));
-    return raw.map((line) => stripComments(line).trim()).filter((line) => line !== "");
+    return raw.map((line) => pyStrip(stripComments(line))).filter((line) => line !== "");
   }
 
   private parseHeader(line: string): void {
@@ -343,7 +344,7 @@ class FlowchartParser {
   }
 
   private parseLine(line: string): void {
-    const lower = line.toLowerCase().trim();
+    const lower = pyStrip(line.toLowerCase());
     if (lower.startsWith("subgraph")) return this.parseSubgraph(line);
     if (lower === "end") return this.closeSubgraph();
     if (lower.startsWith("direction ")) return this.parseDirectionOverride(line);
@@ -356,7 +357,7 @@ class FlowchartParser {
   }
 
   private parseSubgraph(line: string): void {
-    const rest = line.slice("subgraph".length).trim();
+    const rest = pyStrip(line.slice("subgraph".length));
     let id = rest;
     let label = rest;
     const bracket = SUBGRAPH_BRACKET_RE.exec(rest);
@@ -417,7 +418,7 @@ class FlowchartParser {
       return;
     }
     for (const raw of indices.split(",")) {
-      const index = raw.trim();
+      const index = pyStrip(raw);
       if (/^\d+$/.test(index)) this.graph.linkStyles.set(Number.parseInt(index, 10), props);
     }
   }
@@ -427,7 +428,7 @@ class FlowchartParser {
 
     if (segments.length === 1) {
       for (const text of this.splitAmpersand((segments[0] as Segment).text)) {
-        const node = this.parseNode(text.trim());
+        const node = this.parseNode(pyStrip(text));
         if (node === null) continue;
         this.graph.addNode(node);
         this.registerInSubgraph(node.id);
@@ -442,7 +443,7 @@ class FlowchartParser {
 
       const currentNodes: string[] = [];
       for (const text of this.splitAmpersand(seg.text)) {
-        const node = this.parseNode(text.trim());
+        const node = this.parseNode(pyStrip(text));
         if (node === null) continue;
         this.graph.addNode(node);
         this.registerInSubgraph(node.id);
@@ -546,7 +547,7 @@ class FlowchartParser {
       }
       i++;
     }
-    const last = current.join("").trim();
+    const last = pyStrip(current.join(""));
     if (last !== "") parts.push(last);
     return parts;
   }
@@ -567,7 +568,7 @@ class FlowchartParser {
   /** One line as alternating node groups and arrows. */
   private splitByArrows(line: string): Segment[] {
     const segments: Segment[] = [];
-    let remaining = line.trim();
+    let remaining = pyStrip(line);
 
     while (remaining !== "") {
       // Positions come from the MASKED text, the label from the original, or a quoted label would come back blanked.
@@ -580,7 +581,7 @@ class FlowchartParser {
         const pipeStart = span.indexOf(PIPE);
         const pipeEnd = span.lastIndexOf(PIPE);
         const label =
-          pipeStart >= 0 && pipeEnd > pipeStart ? stripQuotes(span.slice(pipeStart + 1, pipeEnd).trim()) : labelled.label;
+          pipeStart >= 0 && pipeEnd > pipeStart ? stripQuotes(pyStrip(span.slice(pipeStart + 1, pipeEnd))) : labelled.label;
         best = { ...labelled, label };
       }
 
@@ -588,12 +589,12 @@ class FlowchartParser {
       if (plain !== null && (best === null || plain.pos < best.pos)) best = plain;
 
       if (best === null) {
-        const text = remaining.trim();
+        const text = pyStrip(remaining);
         if (text !== "") segments.push(makeSegment({ text }));
         break;
       }
 
-      const before = remaining.slice(0, best.pos).trim();
+      const before = pyStrip(remaining.slice(0, best.pos));
       if (before !== "") segments.push(makeSegment({ text: before }));
 
       segments.push(
@@ -610,10 +611,10 @@ class FlowchartParser {
         })
       );
 
-      remaining = remaining.slice(best.end).trim();
+      remaining = pyStrip(remaining.slice(best.end));
     }
 
-    return segments.length > 0 ? segments : [makeSegment({ text: line.trim() })];
+    return segments.length > 0 ? segments : [makeSegment({ text: pyStrip(line) })];
   }
 
   /** An arrow carrying a label, either between pipes or between its two halves. */
@@ -629,7 +630,7 @@ class FlowchartParser {
         style,
         hasStart,
         hasEnd,
-        label: (piped[5] as string).trim(),
+        label: pyStrip((piped[5] as string)),
         length: computeArrowLength(arrowPart, style),
         typeStart,
         typeEnd,
@@ -645,7 +646,7 @@ class FlowchartParser {
         style,
         hasStart,
         hasEnd,
-        label: (m[2] as string).trim(),
+        label: pyStrip((m[2] as string)),
         length: computeArrowLength((m[1] as string) + (m[3] as string), style),
         typeStart: ArrowType.ARROW,
         typeEnd: ArrowType.ARROW,
@@ -684,7 +685,7 @@ class FlowchartParser {
     typeStart: ArrowType;
     typeEnd: ArrowType;
   } {
-    const s = arrow.trim();
+    const s = pyStrip(arrow);
     const hasStart = s.startsWith("<") || s.startsWith("o") || s.startsWith("x");
     const hasEnd = s.endsWith(">") || s.endsWith("x") || s.endsWith("o");
     let typeStart = ArrowType.ARROW;
@@ -703,13 +704,13 @@ class FlowchartParser {
   /** One node declaration: `A`, `A[label]`, `A{label}`, `A@{shape: diamond}`, with an optional `:::class`. */
   private parseNode(raw: string): Node | null {
     if (raw === "") return null;
-    let text = stripChars(raw.trim(), SEMICOLON, false, true);
+    let text = stripChars(pyStrip(raw), SEMICOLON, false, true);
 
     let styleClass: string | null = null;
     const classAt = text.lastIndexOf(STYLE_CLASS_MARK);
     if (classAt !== -1) {
-      styleClass = text.slice(classAt + STYLE_CLASS_MARK.length).trim();
-      text = text.slice(0, classAt).trim();
+      styleClass = pyStrip(text.slice(classAt + STYLE_CLASS_MARK.length));
+      text = pyStrip(text.slice(0, classAt));
     }
 
     const at = AT_SHAPE_RE.exec(text);
@@ -726,16 +727,16 @@ class FlowchartParser {
       if (idx <= 0 || insideQuotes(text, idx)) continue;
       const rest = text.slice(idx + open.length);
       if (!rest.endsWith(close)) continue;
-      const id = text.slice(0, idx).trim();
+      const id = pyStrip(text.slice(0, idx));
       if (id === "") continue;
-      const rawLabel = rest.slice(0, -close.length).trim();
+      const rawLabel = pyStrip(rest.slice(0, -close.length));
       this.shapedNodeIds.add(id);
       const md = parseMarkdownLabel(rawLabel);
       if (md !== null) return makeNode(id, md.plain, { shape, styleClass, labelSegments: md.segments });
       return makeNode(id, stripQuotes(rawLabel), { shape, styleClass });
     }
 
-    let id = text.trim();
+    let id = pyStrip(text);
     if (id === "" || !PLAIN_ID_RE.test(id)) {
       id = stripQuotes(id);
       if (id === "") return null;
@@ -755,7 +756,7 @@ export function parseFlowchart(text: string): Graph {
  */
 export function declaresFlowchart(text: string): boolean {
   for (const raw of text.split("\n")) {
-    const line = stripComments(raw).trim();
+    const line = pyStrip(stripComments(raw));
     if (line === "") continue;
     return HEADER_KEYWORDS.includes((words(line)[0] ?? "").toLowerCase());
   }

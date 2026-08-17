@@ -1,7 +1,7 @@
 // Ported from src/termaid/parser/quadrant.py.
 
 import { makeQuadrantChart, type QuadrantChart } from "../model/quadrant.js";
-import { splitLines } from "../pycompat.js";
+import { pyStrip, splitLines } from "../pycompat.js";
 
 const COMMENT = "%%";
 const TITLE = "title ";
@@ -16,7 +16,7 @@ const POINT_RE = /^(.+?):\s*\[\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\]/;
 
 /** A mermaid quadrant chart definition. */
 export function parseQuadrant(text: string): QuadrantChart {
-  const lines = splitLines(text.trim());
+  const lines = splitLines(pyStrip(text));
   const chart = makeQuadrantChart();
   if (lines.length === 0) return chart;
 
@@ -24,10 +24,10 @@ export function parseQuadrant(text: string): QuadrantChart {
     const comment = line.indexOf(COMMENT);
     if (comment >= 0) line = line.slice(0, comment);
 
-    const stripped = line.trim();
+    const stripped = pyStrip(line);
     if (stripped === "") continue;
     const lower = stripped.toLowerCase();
-    const after = (keyword: string): string => stripped.slice(keyword.length).trim();
+    const after = (keyword: string): string => pyStrip(stripped.slice(keyword.length));
 
     if (lower.startsWith(TITLE)) {
       chart.title = after(TITLE);
@@ -47,7 +47,7 @@ export function parseQuadrant(text: string): QuadrantChart {
       const point = POINT_RE.exec(stripped);
       if (point !== null) {
         chart.points.push({
-          label: (point[1] as string).trim(),
+          label: pyStrip((point[1] as string)),
           x: Number.parseFloat(point[2] as string),
           y: Number.parseFloat(point[3] as string),
         });

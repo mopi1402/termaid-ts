@@ -20,9 +20,21 @@ export function splitLines(text: string): string[] {
 export const PY_WORD_CHARS = "\\p{L}\\p{N}_";
 export const PY_WORD = `[${PY_WORD_CHARS}]`;
 
+/**
+ * What Python calls whitespace, spelled out, because `\s` is NOT it. The two sets differ by six code points, and each
+ * difference bites the opposite way: `\x1c` to `\x1f` and `\x85` are whitespace to Python alone, and U+FEFF is
+ * whitespace to JavaScript alone. So `trim()` both keeps what `strip()` cuts and cuts what `strip()` keeps.
+ */
+const PY_SPACE = "\\t\\n\\v\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
+const LEADING_SPACE = new RegExp(`^[${PY_SPACE}]+`, "u");
+const TRAILING_SPACE = new RegExp(`[${PY_SPACE}]+$`, "u");
+
 /** Python's `str.lstrip()` and `str.rstrip()` with no argument, which cut whitespace alone. */
-export const lstrip = (text: string): string => text.replace(/^\s+/, "");
-export const rstrip = (text: string): string => text.replace(/\s+$/, "");
+export const lstrip = (text: string): string => text.replace(LEADING_SPACE, "");
+export const rstrip = (text: string): string => text.replace(TRAILING_SPACE, "");
+
+/** Python's `str.strip()` with no argument. NOT `trim()`: see `PY_SPACE` for the six code points that separate them. */
+export const pyStrip = (text: string): string => rstrip(lstrip(text));
 
 /** Python's `str.strip(chars)`: every leading and trailing character that is IN the set, not the set as a prefix. */
 export function stripChars(text: string, chars: string): string {
@@ -76,7 +88,7 @@ const NAN_RE = /^[+-]?nan$/i;
 
 /** Python's `float(text)`, or nothing at all where it would raise. */
 export function pyFloat(text: string): number | null {
-  const stripped = text.trim().replaceAll("_", "");
+  const stripped = pyStrip(text).replaceAll("_", "");
   if (FLOAT_RE.test(stripped)) return Number.parseFloat(stripped);
   if (INFINITY_RE.test(stripped)) return stripped.startsWith("-") ? -Infinity : Infinity;
   if (NAN_RE.test(stripped)) return Number.NaN;
@@ -85,7 +97,7 @@ export function pyFloat(text: string): number | null {
 
 /** Python's `int(text)`, which is a whole number or nothing at all: `3.0` raises there, so it reads as nothing here. */
 export function pyInt(text: string): number | null {
-  const stripped = text.trim();
+  const stripped = pyStrip(text);
   return /^[+-]?\d+$/.test(stripped) ? Number.parseInt(stripped, 10) : null;
 }
 

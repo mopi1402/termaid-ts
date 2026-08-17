@@ -9,7 +9,7 @@ import { getTheme, type Theme } from "../renderer/themes.js";
 import { Graph } from "../graph/model.js";
 import { renderGraphCanvas, type RenderOptions } from "../renderer/draw.js";
 import { formatHex, parseHex, Text, type RGB } from "../richcompat.js";
-import { rstrip } from "../pycompat.js";
+import { pyStrip, rstrip } from "../pycompat.js";
 
 const HEX_MARK = "#";
 const SHORT_HEX = 3;
@@ -51,7 +51,7 @@ function cssToRichStyle(props: CssProps): string | null {
   }
 
   const strokeWidth = props.get("stroke-width");
-  if (strokeWidth && !THIN_STROKES.has(strokeWidth.replaceAll(PIXELS, "").trim())) parts.push(BOLD);
+  if (strokeWidth && !THIN_STROKES.has(pyStrip(strokeWidth.replaceAll(PIXELS, "")))) parts.push(BOLD);
 
   if (props.get("stroke-dasharray")) parts.push(DIM);
 
@@ -183,7 +183,7 @@ export function renderRich(
             bg = th.bgDefault;
           }
           const fg = ch !== SPACE ? (styleMap.get(styleKey) ?? EMPTY) : EMPTY;
-          styleStr = fg ? `${fg} ${bg}`.trim() : bg;
+          styleStr = fg ? pyStrip(`${fg} ${bg}`) : bg;
         }
         if (styleStr) text.stylize(styleStr, pos + colIndex, pos + colIndex + 1);
       } else {
@@ -266,7 +266,7 @@ export function renderSequenceRich(canvas: Canvas, theme: string = DEFAULT): Tex
             styleMap.get(styleKey) ?? styleMap.get(styleKey.split(DEEP_SUFFIX)[0] as string) ?? th.bgDefault;
         } else if (styleKey === NODE || styleKey === LABEL) {
           const fg = ch !== SPACE ? (styleMap.get(styleKey) ?? EMPTY) : EMPTY;
-          styleStr = fg ? `${fg} ${th.bgNode}`.trim() : th.bgNode;
+          styleStr = fg ? pyStrip(`${fg} ${th.bgNode}`) : th.bgNode;
         } else {
           // A blank cell outside a section is left transparent, so only what was drawn takes a colour.
           styleStr = ch !== SPACE ? (styleMap.get(styleKey) ?? EMPTY) : EMPTY;
