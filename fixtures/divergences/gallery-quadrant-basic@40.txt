@@ -1,0 +1,25 @@
+                       Tech Evaluation
+
+↑ Low Impact -> High Impact
+                                │
+                                │
+                   ● Cache      │
+                                │
+                                │                ● Auth
+               Plan             │          Do First
+                                │
+                                │
+                                │
+                                │
+  ──────────────────────────────┼─────────────────────────────
+                                │
+                                │
+                                │
+                                │             ● Migrate DB
+             Delegate           │          Eliminate
+          ● Typos               │
+                                │
+                                │
+                                │
+
+                   Low Effort -> High Effort

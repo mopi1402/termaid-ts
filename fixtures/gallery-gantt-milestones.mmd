@@ -1,0 +1,12 @@
+gantt
+    title Launch Timeline
+    dateFormat YYYY-MM-DD
+    section Planning
+        Requirements   :a1, 2024-01-01, 10d
+        Kickoff        :milestone, m1, 2024-01-11, 0d
+    section Build
+        Development    :a2, after m1, 30d
+        Code freeze    :milestone, m2, after a2, 0d
+    section Release
+        QA             :a3, after m2, 14d
+        Launch         :milestone, m3, after a3, 0d

@@ -260,6 +260,17 @@ function drawBoxStart(canvas: Canvas, at: Point, next: Point, cs: CharSet): void
 const labelOverlaps = (row: number, placed: PlacedLabel[]): boolean => placed.some(([r]) => r === row);
 
 /**
+ * ◉ Both charsets, a cell holding whichever one wrote it. A rule may be written over, but an arrowhead is the only
+ * mark that an edge ARRIVES anywhere: written over, the edge leaves the drawing.
+ */
+const ARROWHEADS: ReadonlySet<string> = new Set(
+  [UNICODE, ASCII].flatMap((set) => [set.arrowRight, set.arrowLeft, set.arrowDown, set.arrowUp])
+);
+
+const blocksLabel = (canvas: Canvas, row: number, col: number): boolean =>
+  canvas.isProtected(row, col) || ARROWHEADS.has(canvas.get(row, col));
+
+/**
  * ◉ Whether a label may be written from here without landing on anything already drawn. `put` DROPS a character that
  * would fall on a protected cell and writes straight over one that is merely occupied, so a placement that is not
  * clear either loses its tail without a word or lands inside the box next door. Measured 2026-08-17 on two
@@ -274,7 +285,7 @@ function labelFits(canvas: Canvas, row: number, col: number, label: string): boo
   // PROTECTED and not merely occupied: a node's whole block is protected, which is both the border a label used to be
   // cut against and the interior it used to be written into. A subgraph border is not, and the reference writes over
   // one to keep a label whole, which costs a rule character and reads far better than moving the label away.
-  for (let c = col; c < end; c++) if (canvas.isProtected(row, c)) return false;
+  for (let c = col; c < end; c++) if (blocksLabel(canvas, row, c)) return false;
   return true;
 }
 
@@ -282,7 +293,7 @@ function labelFits(canvas: Canvas, row: number, col: number, label: string): boo
 function fittedLabel(canvas: Canvas, row: number, col: number, label: string): string {
   if (labelFits(canvas, row, col, label)) return label;
   let free = 0;
-  while (col + free < canvas.width && row < canvas.height && !canvas.isProtected(row, col + free)) free++;
+  while (col + free < canvas.width && row < canvas.height && !blocksLabel(canvas, row, col + free)) free++;
   if (free <= 1) return "";
   return truncateToWidth(label, free, ELLIPSIS);
 }

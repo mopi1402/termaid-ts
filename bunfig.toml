@@ -1,4 +1,3 @@
 [test]
-# La decouverte des tests reste dans tests/ : la racine du projet accueille des
-# depots tiers lus de cote (tmp/), dont les suites ne sont pas les notres.
+# La racine du projet accueille des depots tiers lus de cote, dont les suites ne sont pas les notres.
 root = "tests"

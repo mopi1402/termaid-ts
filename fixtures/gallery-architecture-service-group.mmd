@@ -1,0 +1,7 @@
+architecture-beta
+    group cloud(cloud)[Cloud]
+    service web(server)[Web Server] in cloud
+    service api(server)[API Server] in cloud
+    service db(database)[Database] in cloud
+    web:R --> L:api
+    api:R --> L:db

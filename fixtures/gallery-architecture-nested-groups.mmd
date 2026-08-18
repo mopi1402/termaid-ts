@@ -1,0 +1,10 @@
+architecture-beta
+    group infra(cloud)[Infrastructure]
+    group backend(server)[Backend] in infra
+    service api(server)[API] in backend
+    service db(database)[Database] in backend
+    service cdn(internet)[CDN]
+    service client(internet)[Client]
+    client:R --> L:cdn
+    cdn:R --> L:api
+    api:B --> T:db

@@ -1,0 +1,20 @@
+graph TD
+    subgraph Client
+        A[Browser]
+    end
+    subgraph Server
+        B[Load Balancer]
+        C[App Server 1]
+        D[App Server 2]
+    end
+    subgraph Data
+        E[(PostgreSQL)]
+        F[(Redis)]
+    end
+    A --> B
+    B --> C
+    B --> D
+    C --> E
+    D --> E
+    C --> F
+    D --> F

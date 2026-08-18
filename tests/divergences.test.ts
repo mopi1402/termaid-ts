@@ -1,4 +1,4 @@
-// The three places this port refuses to reproduce the reference, and no oracle can answer for any: what the Python
+// The four places this port refuses to reproduce the reference, and no oracle can answer for any: what the Python
 // draws there is the thing being rejected. Both are the same judgement, that INFORMATION THE AUTHOR WROTE and the
 // reader never gets is a bug and not a behaviour, so neither is a divergence of taste.
 //
@@ -72,11 +72,31 @@ describe("◉ a pie title written on the header line, which the reference drops"
   });
 });
 
+describe("◉ an edge label, which the reference writes inside the box next door", () => {
+  // Three edges leave A, so three arrowheads arrive below. Measured 2026-08-18: the reference keeps them and puts
+  // `label` INSIDE the box of C, where this port used to spend an arrowhead's cell on it and draw one edge fewer.
+  const SOURCE = "graph TD\n    A --> B\n    A -.-> C\n    A ==> D\n    B -->|label| C\n";
+
+  it.each([40, 80])("keeps every arrowhead at width %i", (width) => {
+    const drawn = render(SOURCE, { width });
+    expect([...drawn].filter((c) => c === "▼")).toHaveLength(3);
+  });
+
+  it.each([40, 80])("still draws the label at width %i", (width) => {
+    expect(render(SOURCE, { width })).toContain("label");
+  });
+
+  it("keeps the label out of every node's box", () => {
+    const boxed = render(SOURCE, { width: 80 })
+      .split("\n")
+      .filter((line) => line.includes("│") && line.includes("label"));
+    expect(boxed).toEqual([]);
+  });
+});
+
 describe("◉ a mindmap id and the shape it wraps, which the reference draws as text", () => {
-  // Mermaid puts an id in FRONT of a shape and says the drawing carries only what sits between the delimiters.
-  // `parser/mindmap.py` anchors its four patterns at the start of the line, so a shape behind an id matches none of
-  // them, and two of the six shapes have no pattern at all. Measured 2026-08-18 on termaid 0.8.0: the reference draws
-  // `root((Central idea))` and `id1[Square branch]` verbatim, delimiters and id included.
+  // `parser/mindmap.py` anchors its four patterns at the start of a line, so a shape behind an id matches none of
+  // them, and two of mermaid's six shapes have no pattern at all. Measured 2026-08-18: the reference draws both verbatim.
   const SHAPED: ReadonlyArray<readonly [string, string]> = [
     ["circle", "root((Central))"],
     ["square", "id1[Central]"],
@@ -95,12 +115,10 @@ describe("◉ a mindmap id and the shape it wraps, which the reference draws as 
     expect(drawn).not.toContain(written);
   });
 
-  // The two shapes the reference has no pattern for at all, one of which opens on the same character as another.
   it("reads the circle rather than leaving half of it in the text", () => {
     expect(render("mindmap\n  ((Central))\n    Branch\n", { width: 60 })).toContain("Central ");
   });
 
-  // An id is a handle and never a wrapper, so a label wearing no shape keeps every character the author wrote.
   it("leaves a bare label alone, having no delimiters to drop", () => {
     expect(render("mindmap\n  Plain label\n    Branch\n", { width: 60 })).toContain("Plain label");
   });

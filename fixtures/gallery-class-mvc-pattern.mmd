@@ -1,0 +1,17 @@
+classDiagram
+    class Model {
+        -data: Map
+        +getData()
+        +setData()
+    }
+    class View {
+        +render()
+        +update()
+    }
+    class Controller {
+        +handleInput()
+        +validate()
+    }
+    Controller --> Model
+    Controller --> View
+    View --> Model

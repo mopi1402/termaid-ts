@@ -1,0 +1,8 @@
+                        ╭─ Requirements
+          ╭─ Planning ──├─ Timeline
+          │             ╰─ Budget
+Project ──┤                ╭─ Frontend
+          ├─ Development ──├─ Backend
+          │                ╰─ Testing
+          ╰─ Launch ──╭─ Marketing
+                      ╰─ Support

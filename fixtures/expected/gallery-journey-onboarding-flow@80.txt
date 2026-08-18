@@ -1,0 +1,13 @@
+  New Hire Onboarding
+
+  ● Employee
+  ◆ Manager
+  ■ Mentor
+  ▲ Team
+
+  ╭─────────── Day 1 ─────────────╮   ╭───────── Week 1 ───────────╮
+
+  ╭●─────────╮ ╭●◆─────╮ ╭●──────╮    ╭●─────╮ ╭●■───────╮ ╭●▲────╮
+ ─Setup laptop─Meet team─Read docs────First PR─Code review─│ Demo │────►
+  ╰──────────╯ ╰───────╯ ╰───────╯    ╰──────╯ ╰─────────╯ ╰──────╯
+       😐         😄        😟           😊        😊         😄

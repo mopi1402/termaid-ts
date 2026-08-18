@@ -97,8 +97,7 @@ await Promise.all(
   })
 );
 
-// Là où le port diverge EXPRÈS. Chaque harnais nomme SES cas, jamais ceux d'un autre : c'est ce qui fait qu'une
-// allowance périmée se voit ici et pas ailleurs. Même forme que le `ASSUMED` de `differential.ts` et de `probe.ts`.
+// Là où le port diverge EXPRÈS. Chaque harnais nomme SES cas, sinon une allowance périmée ne se voit nulle part.
 const ASSUMED: ReadonlyArray<readonly [string, string]> = [
   ["bom-leading", "un BOM en tête est retiré avant la lecture de l'entête, quand la référence le garde et perd le diagramme (◉ 0.8.0)"],
 ];

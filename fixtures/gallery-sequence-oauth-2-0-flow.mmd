@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant U as User
+    participant C as Client
+    participant A as Auth Server
+    participant R as Resource
+    U->>C: Login
+    C->>A: Authorization Request
+    A->>U: Login Prompt
+    U->>A: Credentials
+    A-->>C: Auth Code
+    C->>A: Exchange Code
+    A-->>C: Access Token
+    C->>R: Request + Token
+    R-->>C: Protected Data
+    C-->>U: Dashboard

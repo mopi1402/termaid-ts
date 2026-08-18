@@ -1,0 +1,13 @@
+                                        Launch Timeline
+
+ Planning       │
+   Requirements │███████████
+   Kickoff      │           ◆
+ Build          │
+   Development  │           ██████████████████████████████████
+   Code freeze  │                                             ◆
+ Release        │
+   QA           │                                             █████████████████
+   Launch       │                                                              ◆
+                └┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┬
+              Jan 01    Jan 10    Jan 19    Jan 28    Feb 06    Feb 15     Feb 24

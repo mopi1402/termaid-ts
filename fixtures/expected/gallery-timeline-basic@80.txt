@@ -1,0 +1,20 @@
+Project History
+
+ ══ 2023 ══
+ │
+ ●── January
+ │   Kickoff meeting
+ │
+ ●── March
+ │   Alpha release
+ │
+ ●── June
+ │   Beta testing
+ │
+ ══ 2024 ══
+ │
+ ●── January
+ │   v1.0 launch
+ │
+ ●── June
+ │   10k users

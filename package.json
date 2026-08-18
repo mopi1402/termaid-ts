@@ -1,6 +1,6 @@
 {
   "name": "@tayomi/termaid-ts",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Mermaid diagrams drawn as Unicode art in the terminal. A TypeScript port of termaid by Fabio Souto, held to byte parity with it.",
   "keywords": [
     "mermaid",

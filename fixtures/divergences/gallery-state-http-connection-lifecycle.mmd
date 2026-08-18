@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Connecting : connect()
+    Connecting --> Open : connected
+    Connecting --> Closed : timeout
+    Open --> Closing : close()
+    Open --> Open : send/receive
+    Closing --> Closed : done
+    Closed --> [*]

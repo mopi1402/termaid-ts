@@ -6,14 +6,18 @@ release the port reproduces, and the patch counts this package's own additions o
 package's own: an addition with no counterpart in termaid, or a deliberate divergence from it; every other entry ports
 something the upstream did.
 
-## 0.8.3 (unreleased)
+## 0.8.3 (2026-08-18)
 
 - ◉ A `pie` title written on the header line is read, where the reference drops it and leaves the chart untitled
 - ◉ The y-axis label is drawn, in `xychart-beta` and `quadrantChart`, both parsing it into the model and neither
   renderer ever reading it back
-- ◉ An edge label is never written over what is already drawn, nor cut without a mark: it takes a clear row instead
+- ◉ An edge label never lands on a node or on an arrowhead, and is never cut without a mark: it takes a clear row
+  instead, crossing a plain rule where it must, since a stroke of a border reads again and a swallowed arrowhead
+  deletes an edge from the drawing
 - ◉ A mindmap id is read as the handle it is and the shape behind it unwrapped, where the reference draws both as text,
   its four patterns anchoring at the start of a line and two of mermaid's six shapes having no pattern at all
+- The parity corpus takes the 41 sources of the upstream gallery, 30 of them judged against the reference like any
+  other fixture and 11 held apart as divergences, their drawings written by the oracle and never copied
 - `fixtures/divergences/` freezes what this port draws alone, kept out of the parity corpus and its mutants
 - `str.strip()` spelled out rather than approximated by `trim()`, which disagrees with it on six code points
 - Rich's `strip_control_codes` and `expand_tabs` ported, the two steps a painted text takes and a plain one does not

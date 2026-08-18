@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant D as Database
+    C->>S: GET /users
+    S->>D: SELECT * FROM users
+    D-->>S: Results
+    S-->>C: 200 JSON

@@ -6,11 +6,9 @@ import { lstrip, pyStrip, rstrip, splitLines } from "../pycompat.js";
 const COMMENT = "%%";
 
 /**
- * The shape a mermaid author may wrap a label in, none of which a mindmap draws: only the text inside is kept.
- *
- * Mermaid names all six, and lets an ID sit in FRONT of any of them: the id is a handle the author writes for the
- * node, never a word the node says, so it is dropped with the delimiters. The circle is tried before the rounded
- * square, both opening on the same character, and a label wrapped in nothing at all matches none of them.
+ * The shape a mermaid author may wrap a label in, none of which a mindmap draws: only the text inside is kept. An id
+ * may sit in front of any of them and goes with the delimiters. The circle is tried first, opening as the rounded
+ * square does.
  */
 const SHAPES: readonly RegExp[] = [
   /^[\w-]*\(\((.+)\)\)$/,

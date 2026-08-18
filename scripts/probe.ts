@@ -233,11 +233,7 @@ const handwritten = (family: string, cases: ReadonlyArray<readonly [string, stri
 
 // ------------------------------------------------------------------ le rapport
 
-/**
- * Là où le port diverge EXPRÈS, chaque entrée portant sa raison. Le cas nommé ici est toujours rendu et toujours
- * comparé : seul le verdict change, donc le jour où l'un cesse de diverger, cette liste est ce qui le dit tout haut.
- * Même forme que le `ASSUMED` de `differential.ts`, dont ces cas sont les jumeaux, écrits une famille plus tôt.
- */
+/** Là où le port diverge EXPRÈS. Le cas est toujours rendu et comparé : seul le verdict change. */
 const ASSUMED: ReadonlyArray<readonly [string, string]> = [
   ["bom-leading", "un BOM en tête est retiré avant la lecture de l'entête, quand la référence le garde et perd le diagramme (◉ 0.8.0)"],
   ["pie-title-inline", "un titre `pie` écrit sur la ligne d'entête est lu, quand la référence le laisse tomber (◉ 0.8.3)"],
@@ -245,7 +241,6 @@ const ASSUMED: ReadonlyArray<readonly [string, string]> = [
   ["mindmap-root-", "un id devant une forme est un pointeur et non un mot, quand la référence dessine les deux (◉ 0.8.3)"],
 ];
 
-/** La raison pour laquelle ce cas a le droit de diverger, ou rien du tout là où il ne l'a pas. */
 const assumedFor = (label: string): string | undefined => ASSUMED.find(([at]) => label.startsWith(at))?.[1];
 
 function report(): void {
@@ -259,7 +254,6 @@ function report(): void {
       if (hits.length > 0) console.log(`  ${at} (${hits.length}) : ${why}`);
     }
   }
-  // Une allowance dont plus personne n'a besoin est une affirmation périmée, et le dire est la seule chose qui la retire.
   for (const [at] of ASSUMED) {
     if (!assumed.some((d) => d.label.startsWith(at))) console.log(`allowance perimee, ce cas ne diverge plus : ${at}`);
   }

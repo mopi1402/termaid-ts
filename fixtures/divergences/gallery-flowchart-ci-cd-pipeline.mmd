@@ -1,0 +1,9 @@
+graph LR
+    A[Push] --> B[Build]
+    B --> C[Test]
+    C --> D{Pass?}
+    D -->|Yes| E[Deploy Staging]
+    D -->|No| F[Notify]
+    E --> G{Approve?}
+    G -->|Yes| H[Deploy Prod]
+    G -->|No| F
